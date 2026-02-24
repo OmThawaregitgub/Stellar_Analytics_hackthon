@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css">
+   <title>SpaceML - About</title>
+   <style>
+      /* Global Styles */
+      * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+      }
+
+      body {
+         font-family: 'Montserrat', sans-serif;
+         background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+         color: #fff;
+         min-height: 100vh;
+      }
+
+      /* Header Styles */
+      .header {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100%;
+         background: rgba(10, 10, 26, 0.95);
+         backdrop-filter: blur(10px);
+         border-bottom: 1px solid rgba(74, 222, 128, 0.2);
+         z-index: 100;
+      }
+
+      .nav {
+         max-width: 1200px;
+         margin: 0 auto;
+         padding: 1rem 2rem;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+      }
+
+      .nav__logo {
+         color: #fff;
+         font-size: 1.5rem;
+         font-weight: bold;
+         text-decoration: none;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+      }
+
+      .nav__logo i {
+         color: #4ade80;
+      }
+
+      .nav__list {
+         display: flex;
+         gap: 2rem;
+         list-style: none;
+      }
+
+      .nav__link {
+         color: #fff;
+         text-decoration: none;
+         font-weight: 500;
+         transition: color 0.3s;
+      }
+
+      .nav__link:hover,
+      .active-link {
+         color: #4ade80 !important;
+      }
+
+      /* Main Content */
+      .main {
+         padding-top: 80px;
+         min-height: 100vh;
+      }
+
+      .about-container {
+         max-width: 1000px;
+         margin: 2rem auto;
+         padding: 2rem;
+         background: rgba(20, 20, 40, 0.7);
+         backdrop-filter: blur(10px);
+         border-radius: 20px;
+         border: 1px solid rgba(74, 222, 128, 0.2);
+         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Section Title */
+      .section-title {
+         font-size: 2.5rem;
+         margin-bottom: 2rem;
+         text-align: center;
+         background: linear-gradient(135deg, #fff, #4ade80);
+         -webkit-background-clip: text;
+         -webkit-text-fill-color: transparent;
+         background-clip: text;
+      }
+
+      /* Problem Statement */
+      .problem-statement {
+         background: rgba(30, 30, 50, 0.8);
+         padding: 1.5rem;
+         border-radius: 12px;
+         margin-bottom: 2rem;
+         border-left: 4px solid #4ade80;
+         font-size: 1.1rem;
+         line-height: 1.6;
+      }
+
+      .problem-statement i {
+         color: #4ade80;
+         margin-right: 0.5rem;
+      }
+
+      /* Step Sections */
+      .step-section {
+         background: rgba(30, 30, 50, 0.6);
+         padding: 1.5rem;
+         border-radius: 12px;
+         margin-bottom: 1.5rem;
+         border: 1px solid rgba(74, 222, 128, 0.2);
+      }
+
+      .step-title {
+         color: #4ade80;
+         font-size: 1.3rem;
+         margin-bottom: 1rem;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+      }
+
+      .step-title i {
+         font-size: 1.5rem;
+      }
+
+      .step-section p {
+         margin-bottom: 1rem;
+         line-height: 1.6;
+         opacity: 0.9;
+      }
+
+      .step-section ul {
+         margin-left: 2rem;
+         margin-bottom: 1rem;
+      }
+
+      .step-section li {
+         margin: 0.5rem 0;
+         opacity: 0.9;
+      }
+
+      /* Class Distribution */
+      .class-distribution {
+         display: flex;
+         justify-content: center;
+         gap: 3rem;
+         margin: 1.5rem 0;
+         padding: 1rem;
+         background: rgba(0, 0, 0, 0.3);
+         border-radius: 10px;
+      }
+
+      .class-item {
+         text-align: center;
+      }
+
+      .class-value {
+         font-size: 2rem;
+         font-weight: bold;
+      }
+
+      .class-0 { color: #ff6b6b; }
+      .class-1 { color: #4ade80; }
+      .class-label { opacity: 0.7; font-size: 0.9rem; }
+
+      /* Smooth Badge */
+      .smooth-badge {
+         display: inline-block;
+         background: rgba(74, 222, 128, 0.1);
+         border: 1px solid #4ade80;
+         padding: 0.5rem 1rem;
+         border-radius: 20px;
+         font-size: 0.9rem;
+         margin: 0.5rem 0;
+      }
+
+      /* Table Styles */
+      .table-container {
+         overflow-x: auto;
+         margin: 1.5rem 0;
+         border-radius: 10px;
+         background: rgba(0, 0, 0, 0.3);
+         border: 1px solid rgba(74, 222, 128, 0.2);
+      }
+
+      .model-table {
+         width: 100%;
+         border-collapse: collapse;
+         font-size: 0.9rem;
+      }
+
+      .model-table th {
+         background: rgba(74, 222, 128, 0.2);
+         color: #4ade80;
+         padding: 1rem;
+         font-weight: 600;
+         text-align: left;
+         border-bottom: 2px solid #4ade80;
+      }
+
+      .model-table td {
+         padding: 0.8rem 1rem;
+         border-bottom: 1px solid rgba(74, 222, 128, 0.1);
+      }
+
+      .model-table tr:hover {
+         background: rgba(74, 222, 128, 0.05);
+      }
+
+      .best-model {
+         background: rgba(74, 222, 128, 0.1);
+      }
+
+      .best-model td:first-child {
+         border-left: 3px solid #4ade80;
+      }
+
+      .metrics-note {
+         font-size: 0.85rem;
+         color: #4ade80;
+         margin-top: 0.5rem;
+         text-align: right;
+      }
+
+      /* Encoding Badges */
+      .encoding-badge {
+         display: inline-block;
+         background: rgba(96, 165, 250, 0.1);
+         border: 1px solid #60a5fa;
+         padding: 0.3rem 0.8rem;
+         border-radius: 15px;
+         font-size: 0.8rem;
+         margin: 0.2rem 0.5rem;
+      }
+
+      .encoding-summary {
+         margin: 2rem 0;
+         padding: 1rem;
+         background: rgba(30, 30, 50, 0.6);
+         border-radius: 10px;
+         border: 1px solid rgba(74, 222, 128, 0.2);
+      }
+
+      .encoding-summary h3 {
+         color: #60a5fa;
+         margin-bottom: 1rem;
+      }
+
+      .encoding-flex {
+         display: flex;
+         gap: 2rem;
+         flex-wrap: wrap;
+      }
+
+      /* Team Section */
+      .team-title {
+         text-align: center;
+         color: #4ade80;
+         font-size: 2rem;
+         margin: 2rem 0 1.5rem;
+      }
+
+      .team-grid {
+         display: grid;
+         grid-template-columns: repeat(3, 1fr);
+         gap: 1.5rem;
+         margin-top: 1rem;
+      }
+
+      .team-member {
+         background: rgba(30, 30, 50, 0.8);
+         padding: 1.5rem;
+         border-radius: 12px;
+         text-align: center;
+         border: 1px solid rgba(74, 222, 128, 0.2);
+         transition: transform 0.3s, border-color 0.3s;
+      }
+
+      .team-member:hover {
+         transform: translateY(-5px);
+         border-color: #4ade80;
+      }
+
+      .team-member i {
+         font-size: 2.5rem;
+         color: #4ade80;
+         margin-bottom: 1rem;
+      }
+
+      .team-member h4 {
+         color: #fff;
+         font-size: 1.2rem;
+         margin-bottom: 1rem;
+      }
+
+      .team-contact {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         gap: 0.5rem;
+         margin: 0.5rem 0;
+         font-size: 0.9rem;
+         opacity: 0.8;
+      }
+
+      .team-contact i {
+         font-size: 1rem;
+         margin: 0;
+         color: #60a5fa;
+      }
+
+      .empty-contact {
+         opacity: 0.4;
+         font-style: italic;
+      }
+
+      /* Visualization Bars */
+      .viz-bars {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         gap: 2rem;
+         margin: 2rem 0;
+         flex-wrap: wrap;
+      }
+
+      .bar-container {
+         text-align: center;
+      }
+
+      .bar {
+         width: 50px;
+         background: #ff6b6b;
+         border-radius: 5px;
+         margin: 0 auto;
+      }
+
+      .bar.class1 {
+         background: #4ade80;
+      }
+
+      .bar-label {
+         margin-top: 0.5rem;
+         font-size: 0.85rem;
+         opacity: 0.8;
+      }
+
+      .arrow-icon {
+         font-size: 2rem;
+         color: #4ade80;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+         .nav {
+            flex-direction: column;
+            gap: 1rem;
+         }
+         
+         .nav__list {
+            gap: 1rem;
+         }
+         
+         .about-container {
+            margin: 1rem;
+            padding: 1rem;
+         }
+         
+         .team-grid {
+            grid-template-columns: 1fr;
+         }
+         
+         .viz-bars {
+            gap: 1rem;
+         }
+         
+         .class-distribution {
+            flex-direction: column;
+            gap: 1rem;
+         }
+      }
+   </style>
+</head>
+<body>
+   <header class="header" id="header">
+      <nav class="nav">
+         <a href="/" class="nav__logo"><i class="ri-rocket-2-line"></i> SpaceML</a>
+         <div class="nav__menu">
+            <ul class="nav__list">
+               <li class="nav__item"><a href="/" class="nav__link">Home</a></li>
+               <li class="nav__item"><a href="/about" class="nav__link active-link">About</a></li>
+               <li class="nav__item"><a href="/analysis" class="nav__link">Analytics</a></li>
+            </ul>
+         </div>
+      </nav>
+   </header>
+
+   <main class="main">
+      <div class="about-container">
+         <h1 class="section-title">Mission SpaceML</h1>
+         
+         <!-- Problem Statement -->
+         <div class="problem-statement">
+            <i class="ri-question-line"></i>
+            <strong>Problem Statement:</strong> Identifying exoplanets from Kepler mission data is challenging due to imbalanced classes (more false positives than true candidates) and the need for accurate radius estimation of confirmed planets.
+         </div>
+
+         <!-- Step 1: Data Cleaning -->
+         <div class="step-section">
+            <div class="step-title">
+               <i class="ri-database-2-line"></i> Step 1: Data Cleaning
+            </div>
+            <p>We cleaned the Kepler Object of Interest (KOI) dataset by:</p>
+            <ul>
+               <li>Removing rows with missing values</li>
+               <li>Handling outliers in key features like transit depth and duration</li>
+               <li>Encoding categorical variables</li>
+               <li>Feature selection based on correlation analysis</li>
+            </ul>
+         </div>
+
+         <!-- Step 2: Class Imbalance -->
+         <div class="step-section">
+            <div class="step-title">
+               <i class="ri-bar-chart-2-line"></i> Step 2: Addressing Class Imbalance
+            </div>
+            <p>The dataset had significant class imbalance:</p>
+            
+            <div class="class-distribution">
+               <div class="class-item">
+                  <div class="class-value class-0">4,839</div>
+                  <div class="class-label">False Positives (Class 0)</div>
+               </div>
+               <div class="class-item">
+                  <div class="class-value class-1">2,746</div>
+                  <div class="class-label">Candidates (Class 1)</div>
+               </div>
+            </div>
+            
+            <div class="smooth-badge">
+               <i class="ri-flask-line"></i> SMOTE Technique Applied
+            </div>
+            <p>We used SMOTE (Synthetic Minority Over-sampling Technique) to balance the classes, creating synthetic samples of the minority class to prevent model bias.</p>
+            
+            <!-- Visualization bars -->
+            <div class="viz-bars">
+               <div class="bar-container">
+                  <div class="bar" style="height: 90px;"></div>
+                  <div class="bar-label">Class 0: 4839</div>
+               </div>
+               <div class="bar-container">
+                  <div class="bar class1" style="height: 50px;"></div>
+                  <div class="bar-label">Class 1: 2746</div>
+               </div>
+               <div class="arrow-icon">→</div>
+               <div class="bar-container">
+                  <div class="bar" style="height: 90px;"></div>
+                  <div class="bar-label">Class 0: 4839</div>
+               </div>
+               <div class="bar-container">
+                  <div class="bar class1" style="height: 90px;"></div>
+                  <div class="bar-label">Class 1: 4839</div>
+               </div>
+            </div>
+         </div>
+
+         <!-- Step 3: Feature Scaling -->
+         <div class="step-section">
+            <div class="step-title">
+               <i class="ri-scales-3-line"></i> Step 3: Feature Scaling
+            </div>
+            <p>We applied StandardScaler to normalize features for regression models. Classification models were trained on unscaled data to preserve interpretability.</p>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+               <span class="encoding-badge">Classification: No scaling</span>
+               <span class="encoding-badge">Regression: StandardScaler</span>
+            </div>
+         </div>
+
+         <!-- Step 4: Classification Models -->
+         <div class="step-section">
+            <div class="step-title">
+               <i class="ri-shield-check-line"></i> Step 4: Classification Model Comparison
+            </div>
+            <p>We tested multiple classification algorithms. Metrics shown: Accuracy, Precision, Recall, F1-Score, and Training Time (s).</p>
+            
+            <div class="table-container">
+               <table class="model-table">
+                  <thead>
+                     <tr>
+                        <th>Model</th>
+                        <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                        <th>F1-Score</th>
+                        <th>Time (s)</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr class="best-model">
+                        <td><strong>XGBClassifier</strong></td>
+                        <td>0.95</td>
+                        <td>0.95</td>
+                        <td>0.95</td>
+                        <td>0.95</td>
+                        <td>0.73</td>
+                     </tr>
+                     <tr>
+                        <td>LGBMClassifier</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.32</td>
+                     </tr>
+                     <tr>
+                        <td>RandomForestClassifier</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>3.56</td>
+                     </tr>
+                     <tr>
+                        <td>ExtraTreesClassifier</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.94</td>
+                        <td>0.87</td>
+                     </tr>
+                     <tr>
+                        <td>BaggingClassifier</td>
+                        <td>0.93</td>
+                        <td>0.93</td>
+                        <td>0.93</td>
+                        <td>0.93</td>
+                        <td>1.00</td>
+                     </tr>
+                     <tr>
+                        <td>DecisionTreeClassifier</td>
+                        <td>0.91</td>
+                        <td>0.91</td>
+                        <td>0.91</td>
+                        <td>0.91</td>
+                        <td>0.19</td>
+                     </tr>
+                     <tr>
+                        <td>AdaBoostClassifier</td>
+                        <td>0.88</td>
+                        <td>0.89</td>
+                        <td>0.89</td>
+                        <td>0.88</td>
+                        <td>0.81</td>
+                     </tr>
+                     <tr>
+                        <td>ExtraTreeClassifier</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.03</td>
+                     </tr>
+                     <tr>
+                        <td>KNeighborsClassifier</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.85</td>
+                        <td>0.51</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <div class="metrics-note">✓ Best Model: XGBClassifier (Selected for deployment)</div>
+         </div>
+
+         <!-- Step 5: Regression Models -->
+         <div class="step-section">
+            <div class="step-title">
+               <i class="ri-ruler-line"></i> Step 5: Regression Model Comparison
+            </div>
+            <p>For planet radius estimation (koi_prad), we evaluated multiple regressors. Metrics shown: R², Adjusted R², RMSE, and Training Time (s).</p>
+            
+            <div class="table-container">
+               <table class="model-table">
+                  <thead>
+                     <tr>
+                        <th>Model</th>
+                        <th>R²</th>
+                        <th>Adj. R²</th>
+                        <th>RMSE</th>
+                        <th>Time (s)</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     <tr class="best-model">
+                        <td><strong>ExtraTreesRegressor</strong></td>
+                        <td>0.97</td>
+                        <td>0.97</td>
+                        <td>0.61</td>
+                        <td>0.91</td>
+                     </tr>
+                     <tr>
+                        <td>XGBRegressor</td>
+                        <td>0.89</td>
+                        <td>0.89</td>
+                        <td>1.12</td>
+                        <td>0.74</td>
+                     </tr>
+                     <tr>
+                        <td>RandomForestRegressor</td>
+                        <td>0.84</td>
+                        <td>0.84</td>
+                        <td>1.36</td>
+                        <td>3.75</td>
+                     </tr>
+                     <tr>
+                        <td>BaggingRegressor</td>
+                        <td>0.83</td>
+                        <td>0.83</td>
+                        <td>1.39</td>
+                        <td>0.34</td>
+                     </tr>
+                     <tr>
+                        <td>GradientBoostingRegressor</td>
+                        <td>0.82</td>
+                        <td>0.82</td>
+                        <td>1.42</td>
+                        <td>1.08</td>
+                     </tr>
+                     <tr>
+                        <td>HistGradientBoostingRegressor</td>
+                        <td>0.56</td>
+                        <td>0.57</td>
+                        <td>2.23</td>
+                        <td>0.31</td>
+                     </tr>
+                     <tr>
+                        <td>LGBMRegressor</td>
+                        <td>0.53</td>
+                        <td>0.54</td>
+                        <td>2.31</td>
+                        <td>0.20</td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+            <div class="metrics-note">✓ Best Model: ExtraTreesRegressor (Selected for deployment)</div>
+         </div>
+
+         <!-- Encoding Summary -->
+         <div class="encoding-summary">
+            <h3>Encoding Summary</h3>
+            <div class="encoding-flex">
+               <div>
+                  <span class="encoding-badge">Classification: Label Encoding</span>
+                  <span class="encoding-badge">No feature scaling</span>
+               </div>
+               <div>
+                  <span class="encoding-badge">Regression: StandardScaler</span>
+                  <span class="encoding-badge">Target scaling applied</span>
+               </div>
+            </div>
+         </div>
+
+         <!-- Team Members Section -->
+         <h2 class="team-title">Our Team</h2>
+         <div class="team-grid">
+            <!-- Vedant Bharne -->
+            <div class="team-member">
+               <i class="ri-user-star-line"></i>
+               <h4>Vedant Bharne</h4>
+               <div>
+                  <div class="team-contact">
+                     <i class="ri-mail-line"></i>
+                     <span class="empty-contact">vedantbharne.23@stvincentngp.edu.in</span>
+                  </div>
+                  <div class="team-contact">
+                     <i class="ri-phone-line"></i>
+                     <span class="empty-contact">9921738556</span>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Om Thaware -->
+            <div class="team-member">
+               <i class="ri-code-line"></i>
+               <h4>Om Thaware</h4>
+               <div>
+                  <div class="team-contact">
+                     <i class="ri-mail-line"></i>
+                     <span>omthaware.23@stvincentngp.edu.in</span>
+                  </div>
+                  <div class="team-contact">
+                     <i class="ri-phone-line"></i>
+                     <span>8530879129</span>
+                  </div>
+               </div>
+            </div>
+
+            <!-- Nayan Dadulkar -->
+            <div class="team-member">
+               <i class="ri-palette-line"></i>
+               <h4>Nayan Dadulkar</h4>
+               <div>
+                  <div class="team-contact">
+                     <i class="ri-mail-line"></i>
+                     <span class="empty-contact">nayandadulkar.23@stvincentngp.edu.in</span>
+                  </div>
+                  <div class="team-contact">
+                     <i class="ri-phone-line"></i>
+                     <span class="empty-contact">9309532899</span>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </main>
+</body>
+</html>

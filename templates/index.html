@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/3.5.0/remixicon.css">
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+   <title>SpaceML - Exoplanet Discovery</title>
+   <style>
+      /* Main layout - Form only, animation in background */
+      .analysis__container { 
+         display: flex;
+         justify-content: center;
+         margin: 2rem auto 0;
+         width: 100%;
+         max-width: 1200px;
+         position: relative;
+         z-index: 2;
+      }
+      
+      /* Left column - Form (centered) */
+      .analysis__form-box { 
+         width: 450px; 
+         background: rgba(0, 0, 0, 0.7);
+         backdrop-filter: blur(10px);
+         padding: 1.5rem;
+         border-radius: 20px;
+         border: 1px solid rgba(255, 255, 255, 0.1);
+         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+         position: relative;
+         z-index: 3;
+      }
+      
+      /* Form grid - 2 columns */
+      .analysis__grid { 
+         display: grid; 
+         grid-template-columns: repeat(2, 1fr); 
+         gap: 0.8rem; 
+         margin: 1.5rem 0;
+      }
+      
+      /* Input fields */
+      .analysis__input { 
+         width: 100%; 
+         padding: 10px 12px; 
+         background: rgba(255, 255, 255, 0.1); 
+         border: 1px solid rgba(255, 255, 255, 0.15); 
+         color: #fff; 
+         border-radius: 8px; 
+         outline: none; 
+         font-size: 0.85rem;
+         height: 40px;
+         transition: all 0.3s;
+      }
+      .analysis__input:focus {
+         border-color: #4ade80;
+         background: rgba(255, 255, 255, 0.15);
+      }
+      
+      /* Navigation active link */
+      .active-link { color: #4ade80 !important; }
+      
+      /* Home page title */
+      .stellar-title {
+         font-size: 3.5rem;
+         background: linear-gradient(135deg, #fff, #4ade80, #60a5fa);
+         -webkit-background-clip: text;
+         -webkit-text-fill-color: transparent;
+         background-clip: text;
+         margin-bottom: 1rem;
+      }
+      
+      /* Hackathon badge */
+      .hackathon-badge {
+         display: inline-block;
+         background: rgba(74, 222, 128, 0.2);
+         border: 1px solid #4ade80;
+         padding: 0.5rem 1.5rem;
+         border-radius: 30px;
+         font-size: 0.9rem;
+         margin: 1rem 0;
+      }
+      
+      /* Team section */
+      .team-section {
+         margin-top: 2rem;
+         padding: 1.5rem;
+         background: rgba(0, 0, 0, 0.5);
+         backdrop-filter: blur(10px);
+         border-radius: 15px;
+         border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .team-grid {
+         display: grid;
+         grid-template-columns: repeat(3, 1fr);
+         gap: 1.5rem;
+         margin-top: 1rem;
+      }
+      .team-member {
+         text-align: center;
+         padding: 1.5rem;
+         background: rgba(255, 255, 255, 0.03);
+         border-radius: 12px;
+         border: 1px solid rgba(255, 255, 255, 0.05);
+         transition: transform 0.3s;
+      }
+      .team-member:hover {
+         transform: translateY(-5px);
+         border-color: #4ade80;
+      }
+      .team-member i {
+         font-size: 2.5rem;
+         color: #4ade80;
+         margin-bottom: 1rem;
+      }
+      .team-member h4 {
+         color: #fff;
+         margin-bottom: 0.8rem;
+         font-size: 1.2rem;
+      }
+      .team-contact {
+         font-size: 0.85rem;
+         opacity: 0.8;
+         margin: 0.3rem 0;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         gap: 0.3rem;
+      }
+      .team-contact i {
+         font-size: 1rem;
+         margin: 0;
+         color: #60a5fa;
+      }
+      .empty-contact {
+         opacity: 0.3;
+         font-style: italic;
+      }
+      
+      /* Feature list */
+      .feature-list {
+         list-style: none;
+         margin-top: 1rem;
+      }
+      .feature-list li {
+         margin: 0.8rem 0;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+      }
+      .feature-list i {
+         color: #4ade80;
+      }
+      
+      /* Reset button */
+      .reset-btn {
+         background: rgba(255, 255, 255, 0.1);
+         color: white;
+         border: 1px solid rgba(255, 255, 255, 0.2);
+         padding: 0.6rem 1.8rem;
+         border-radius: 8px;
+         cursor: pointer;
+         transition: all 0.3s;
+         display: inline-block;
+         font-size: 0.9rem;
+         text-decoration: none;
+      }
+      .reset-btn:hover {
+         background: rgba(255, 255, 255, 0.2);
+      }
+      
+      /* Result icon */
+      .result-icon {
+         font-size: 4rem;
+         margin-bottom: 0.8rem;
+      }
+
+      /*=============== BACKGROUND SPACE ANIMATION ===============*/
+      .background-animation {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100vw;
+         height: 100vh;
+         z-index: 1;
+         pointer-events: none;
+         overflow: hidden;
+      }
+
+      .bg-earth-container {
+         position: absolute;
+         top: 50%;
+         right: 5%;
+         transform: translateY(-50%);
+         width: 300px;
+         height: 300px;
+         opacity: 0.6;
+      }
+
+      .bg-earth {
+         position: absolute;
+         top: 0;
+         left: 0;
+         width: 100%;
+         height: 100%;
+         border-radius: 50%;
+         background: linear-gradient(135deg, #4ade80, #2563eb);
+         box-shadow: 0 0 60px rgba(74, 222, 128, 0.3);
+         animation: bg-earth-glow 4s ease-in-out infinite;
+         overflow: hidden;
+      }
+
+      .bg-earth-inner {
+         position: absolute;
+         top: -20%;
+         left: -20%;
+         width: 140%;
+         height: 140%;
+         background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+         animation: bg-earth-rotate 30s linear infinite;
+      }
+
+      .bg-orbit {
+         position: absolute;
+         top: -30px;
+         left: -30px;
+         width: 360px;
+         height: 360px;
+         border: 2px dashed rgba(74, 222, 128, 0.2);
+         border-radius: 50%;
+         animation: bg-orbit-rotate 20s linear infinite;
+      }
+
+      .bg-orbit-2 {
+         position: absolute;
+         top: -60px;
+         left: -60px;
+         width: 420px;
+         height: 420px;
+         border: 2px dashed rgba(96, 165, 250, 0.15);
+         border-radius: 50%;
+         animation: bg-orbit-rotate-reverse 25s linear infinite;
+      }
+
+      .bg-satellite {
+         position: absolute;
+         top: -8px;
+         left: 50%;
+         width: 8px;
+         height: 8px;
+         background: #f59e0b;
+         border-radius: 50%;
+         transform: translateX(-50%);
+         box-shadow: 0 0 15px #f59e0b;
+      }
+
+      .bg-satellite-2 {
+         position: absolute;
+         top: 50%;
+         right: -8px;
+         width: 6px;
+         height: 6px;
+         background: #60a5fa;
+         border-radius: 50%;
+         transform: translateY(-50%);
+         box-shadow: 0 0 12px #60a5fa;
+      }
+
+      .bg-stars {
+         position: absolute;
+         top: 0;
+         left: 0;
+         width: 100%;
+         height: 100%;
+      }
+
+      .bg-star {
+         position: absolute;
+         background: white;
+         border-radius: 50%;
+         animation: bg-twinkle var(--duration, 3s) ease-in-out infinite;
+      }
+
+      .bg-star:nth-child(1) { top: 20%; left: 10%; width: 2px; height: 2px; --duration: 2s; }
+      .bg-star:nth-child(2) { top: 40%; left: 20%; width: 3px; height: 3px; --duration: 2.5s; }
+      .bg-star:nth-child(3) { top: 60%; left: 15%; width: 2px; height: 2px; --duration: 1.8s; }
+      .bg-star:nth-child(4) { top: 30%; left: 80%; width: 3px; height: 3px; --duration: 3s; }
+      .bg-star:nth-child(5) { top: 70%; left: 85%; width: 2px; height: 2px; --duration: 2.2s; }
+      .bg-star:nth-child(6) { top: 50%; left: 40%; width: 4px; height: 4px; --duration: 2.8s; }
+      .bg-star:nth-child(7) { top: 80%; left: 60%; width: 2px; height: 2px; --duration: 2.4s; }
+      .bg-star:nth-child(8) { top: 15%; left: 50%; width: 3px; height: 3px; --duration: 2.1s; }
+      .bg-star:nth-child(9) { top: 90%; left: 30%; width: 2px; height: 2px; --duration: 1.9s; }
+      .bg-star:nth-child(10) { top: 45%; left: 70%; width: 3px; height: 3px; --duration: 2.6s; }
+      .bg-star:nth-child(11) { top: 25%; left: 90%; width: 2px; height: 2px; --duration: 2.3s; }
+      .bg-star:nth-child(12) { top: 75%; left: 5%; width: 3px; height: 3px; --duration: 2.7s; }
+      .bg-star:nth-child(13) { top: 10%; left: 70%; width: 2px; height: 2px; --duration: 2s; }
+      .bg-star:nth-child(14) { top: 85%; left: 45%; width: 3px; height: 3px; --duration: 2.5s; }
+      .bg-star:nth-child(15) { top: 35%; left: 95%; width: 2px; height: 2px; --duration: 2.2s; }
+
+      .bg-scanning-text {
+         position: absolute;
+         bottom: 10%;
+         left: 50%;
+         transform: translateX(-50%);
+         font-size: 1.2rem;
+         letter-spacing: 4px;
+         color: rgba(74, 222, 128, 0.3);
+         text-transform: uppercase;
+         white-space: nowrap;
+         animation: bg-scan-pulse 3s ease-in-out infinite;
+      }
+
+      @keyframes bg-earth-rotate {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(360deg); }
+      }
+
+      @keyframes bg-earth-glow {
+         0%, 100% { box-shadow: 0 0 60px rgba(74, 222, 128, 0.3); }
+         50% { box-shadow: 0 0 100px rgba(74, 222, 128, 0.5); }
+      }
+
+      @keyframes bg-orbit-rotate {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(360deg); }
+      }
+
+      @keyframes bg-orbit-rotate-reverse {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(-360deg); }
+      }
+
+      @keyframes bg-twinkle {
+         0%, 100% { opacity: 0.2; transform: scale(1); }
+         50% { opacity: 1; transform: scale(1.3); }
+      }
+
+      @keyframes bg-scan-pulse {
+         0%, 100% { opacity: 0.2; }
+         50% { opacity: 0.5; }
+      }
+
+      /* Form title and text */
+      .form-title {
+         font-size: 1.8rem;
+         margin-bottom: 0.5rem;
+         color: #fff;
+         text-align: center;
+      }
+      .form-subtitle {
+         margin-bottom: 1rem;
+         opacity: 0.8;
+         font-size: 0.9rem;
+         text-align: center;
+      }
+
+      /* Detect button */
+      .detect-btn {
+         background: linear-gradient(180deg, #4ade80, #22c55e);
+         border: none;
+         color: white;
+         padding: 12px;
+         border-radius: 30px;
+         font-weight: bold;
+         cursor: pointer;
+         transition: all 0.3s;
+         font-size: 0.9rem;
+         grid-column: span 2;
+         margin-top: 0.5rem;
+         border: none;
+      }
+      .detect-btn:hover {
+         transform: translateY(-2px);
+         box-shadow: 0 5px 20px rgba(74, 222, 128, 0.4);
+      }
+
+      /* Navigation */
+      .nav {
+         padding: 0 1rem;
+         position: relative;
+         z-index: 10;
+      }
+
+      /* Ensure container allows centering */
+      .home__container {
+         max-width: 1200px;
+         width: 100%;
+         margin: 0 auto;
+         padding: 0 1rem;
+         position: relative;
+         z-index: 5;
+      }
+
+      .home__content {
+         width: 100%;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         position: relative;
+         z-index: 5;
+      }
+
+      /* Button container */
+      .button-container {
+         display: flex;
+         justify-content: center;
+         margin-top: 1rem;
+      }
+
+      /* Main content area */
+      .main {
+         position: relative;
+         z-index: 2;
+         min-height: 100vh;
+         overflow-y: auto;
+      }
+
+      /* Header stays above background */
+      .header {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100%;
+         z-index: 100;
+         background: rgba(0, 0, 0, 0.5);
+         backdrop-filter: blur(10px);
+      }
+
+      body {
+         margin: 0;
+         padding: 0;
+         overflow-x: hidden;
+         background: #0a0a1a;
+      }
+
+      /* About Page Styles */
+      .about-container {
+         width: 95%;
+         max-width: 1200px;
+         margin: 2rem auto;
+         padding: 2rem;
+         background: rgba(0, 0, 0, 0.7);
+         backdrop-filter: blur(10px);
+         border-radius: 20px;
+         border: 1px solid rgba(255, 255, 255, 0.1);
+         color: #fff;
+      }
+
+      .step-section {
+         margin: 2rem 0;
+         padding: 1.5rem;
+         background: rgba(255, 255, 255, 0.05);
+         border-radius: 15px;
+         border-left: 4px solid #4ade80;
+      }
+
+      .step-title {
+         color: #4ade80;
+         font-size: 1.4rem;
+         margin-bottom: 1rem;
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+      }
+
+      .class-distribution {
+         display: flex;
+         justify-content: center;
+         gap: 3rem;
+         margin: 1.5rem 0;
+         padding: 1rem;
+         background: rgba(255, 255, 255, 0.03);
+         border-radius: 10px;
+      }
+
+      .class-item {
+         text-align: center;
+      }
+
+      .class-value {
+         font-size: 2rem;
+         font-weight: bold;
+      }
+
+      .class-0 { color: #ff6b6b; }
+      .class-1 { color: #4ade80; }
+      .class-label { opacity: 0.7; font-size: 0.9rem; }
+
+      .smooth-badge {
+         display: inline-block;
+         background: rgba(74, 222, 128, 0.2);
+         border: 1px solid #4ade80;
+         padding: 0.5rem 1rem;
+         border-radius: 20px;
+         font-size: 0.9rem;
+         margin: 0.5rem 0;
+      }
+
+      .table-container {
+         overflow-x: auto;
+         margin: 1.5rem 0;
+         border-radius: 10px;
+         background: rgba(255, 255, 255, 0.03);
+         max-height: 400px;
+         overflow-y: auto;
+      }
+
+      .model-table {
+         width: 100%;
+         border-collapse: collapse;
+         font-size: 0.85rem;
+      }
+
+      .model-table th {
+         background: rgba(74, 222, 128, 0.2);
+         color: #4ade80;
+         padding: 0.8rem;
+         font-weight: 600;
+         position: sticky;
+         top: 0;
+         backdrop-filter: blur(10px);
+      }
+
+      .model-table td {
+         padding: 0.6rem 0.8rem;
+         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .model-table tr:hover {
+         background: rgba(255, 255, 255, 0.05);
+      }
+
+      .best-model {
+         background: rgba(74, 222, 128, 0.1);
+         border-left: 3px solid #4ade80;
+      }
+
+      .section-title {
+         font-size: 2rem;
+         color: #fff;
+         margin: 1rem 0 1.5rem;
+         text-align: center;
+      }
+
+      .problem-statement {
+         font-size: 1.1rem;
+         line-height: 1.6;
+         opacity: 0.9;
+         margin-bottom: 2rem;
+         padding: 1.5rem;
+         background: rgba(255, 255, 255, 0.03);
+         border-radius: 10px;
+         border-left: 4px solid #60a5fa;
+      }
+
+      .metrics-note {
+         font-size: 0.8rem;
+         opacity: 0.6;
+         margin-top: 0.5rem;
+         text-align: right;
+      }
+
+      .reg-section {
+         margin-top: 3rem;
+      }
+
+      .encoding-badge {
+         display: inline-block;
+         background: rgba(96, 165, 250, 0.2);
+         border: 1px solid #60a5fa;
+         padding: 0.3rem 0.8rem;
+         border-radius: 15px;
+         font-size: 0.8rem;
+         margin: 0.2rem 0.5rem;
+      }
+
+      /* Team Members Section */
+      .team-main-title {
+         text-align: center;
+         margin: 2rem 0 1rem;
+         color: #4ade80;
+         font-size: 1.8rem;
+      }
+
+      .team-contact-info {
+         margin-top: 0.5rem;
+         padding-top: 0.5rem;
+         border-top: 1px dashed rgba(255, 255, 255, 0.1);
+      }
+
+      /* History Tab Styles */
+      .history-container {
+         width: 95%;
+         max-width: 800px;
+         margin: 6rem auto 2rem;
+         padding: 2rem;
+         background: rgba(0, 0, 0, 0.7);
+         backdrop-filter: blur(10px);
+         border-radius: 20px;
+         border: 1px solid rgba(255, 255, 255, 0.1);
+         color: #fff;
+         position: relative;
+         z-index: 10;
+      }
+
+      .history-title {
+         font-size: 2rem;
+         color: #4ade80;
+         margin-bottom: 2rem;
+         text-align: center;
+      }
+
+      .history-list {
+         display: flex;
+         flex-direction: column;
+         gap: 1rem;
+      }
+
+      .history-item {
+         background: rgba(255, 255, 255, 0.05);
+         border-radius: 12px;
+         padding: 1.2rem;
+         border: 1px solid rgba(74, 222, 128, 0.2);
+         transition: transform 0.3s, border-color 0.3s;
+      }
+
+      .history-item:hover {
+         transform: translateX(5px);
+         border-color: #4ade80;
+         background: rgba(74, 222, 128, 0.1);
+      }
+
+      .history-item-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: 0.5rem;
+      }
+
+      .history-timestamp {
+         color: #60a5fa;
+         font-size: 0.85rem;
+      }
+
+      .history-result {
+         font-weight: bold;
+         color: #4ade80;
+      }
+
+      .history-result.false-positive {
+         color: #ff6b6b;
+      }
+
+      .history-params {
+         display: flex;
+         flex-wrap: wrap;
+         gap: 0.5rem;
+         margin-top: 0.5rem;
+         font-size: 0.8rem;
+         opacity: 0.7;
+      }
+
+      .history-param {
+         background: rgba(255, 255, 255, 0.03);
+         padding: 0.2rem 0.5rem;
+         border-radius: 4px;
+      }
+
+      .clear-history-btn {
+         background: rgba(255, 255, 255, 0.1);
+         color: #ff6b6b;
+         border: 1px solid #ff6b6b;
+         padding: 0.6rem 1.8rem;
+         border-radius: 8px;
+         cursor: pointer;
+         transition: all 0.3s;
+         display: inline-block;
+         font-size: 0.9rem;
+         text-decoration: none;
+         margin-top: 2rem;
+      }
+
+      .clear-history-btn:hover {
+         background: #ff6b6b;
+         color: white;
+      }
+
+      .no-history {
+         text-align: center;
+         opacity: 0.5;
+         padding: 2rem;
+         font-style: italic;
+      }
+
+      .session-badge {
+         display: inline-block;
+         background: rgba(96, 165, 250, 0.2);
+         border: 1px solid #60a5fa;
+         padding: 0.3rem 1rem;
+         border-radius: 20px;
+         font-size: 0.8rem;
+         margin-bottom: 1rem;
+      }
+   </style>
+</head>
+<body>
+   <!-- BACKGROUND SPACE ANIMATION -->
+   <div class="background-animation">
+      <div class="bg-stars">
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+         <div class="bg-star"></div>
+      </div>
+      
+      <div class="bg-earth-container">
+         <div class="bg-earth">
+            <div class="bg-earth-inner"></div>
+         </div>
+         <div class="bg-orbit">
+            <div class="bg-satellite"></div>
+         </div>
+         <div class="bg-orbit-2">
+            <div class="bg-satellite-2"></div>
+         </div>
+      </div>
+      
+      <div class="bg-scanning-text">SCANNING SPACE</div>
+   </div>
+
+   <header class="header" id="header">
+      <nav class="nav container">
+         <a href="/" class="nav__logo"><i class="ri-rocket-2-line"></i> SpaceML</a>
+         <div class="nav__menu" id="nav-menu">
+            <ul class="nav__list">
+               <li class="nav__item"><a href="/" class="nav__link {% if tab=='home' %}active-link{% endif %}">Home</a></li>
+               <li class="nav__item"><a href="/about" class="nav__link {% if tab=='about' %}active-link{% endif %}">About</a></li>
+               <li class="nav__item"><a href="/analysis" class="nav__link {% if tab=='analysis' %}active-link{% endif %}">Analytics</a></li>
+               <li class="nav__item"><a href="/history" class="nav__link {% if tab=='history' %}active-link{% endif %}">History</a></li>
+            </ul>
+            <div class="nav__close" id="nav-close">
+               <i class="ri-close-line"></i>
+            </div>
+         </div>
+         <div class="nav__toggle" id="nav-toggle">
+            <i class="ri-menu-line"></i>
+         </div>
+      </nav>
+   </header>
+
+   <main class="main">
+      <section class="home section">
+         <div class="home__container container">
+            <div class="home__content">
+               {% if tab == 'home' %}
+                  <h3 class="home__subtitle">WELCOME TO SPACEML</h3>
+                  <h1 class="stellar-title">Stellar Analytics</h1>
+                  <div class="hackathon-badge">
+                     <i class="ri-star-smile-line"></i> NASA Space Apps Challenge 2024
+                  </div>
+                  <p class="home__description">
+                     Embark on a journey through the cosmos using cutting-edge machine learning. 
+                     Our AI-powered platform analyzes real Kepler mission data to discover and 
+                     characterize exoplanets beyond our solar system.
+                  </p>
+                  <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+                     <a href="/analysis" class="home__button">
+                        <i class="ri-search-line"></i> Start Discovery
+                     </a>
+                     <a href="/about" class="home__button" style="background: linear-gradient(180deg, #60a5fa, #2563eb);">
+                        <i class="ri-information-line"></i> Learn More
+                     </a>
+                  </div>
+                  
+                  <!-- Quick Stats -->
+                  <div style="display: flex; gap: 2rem; margin-top: 3rem; justify-content: center; flex-wrap: wrap;">
+                     <div>
+                        <h2 style="color: #4ade80; font-size: 2rem;">5,000+</h2>
+                        <p style="opacity: 0.8;">Kepler Candidates</p>
+                     </div>
+                     <div>
+                        <h2 style="color: #60a5fa; font-size: 2rem;">2-Stage</h2>
+                        <p style="opacity: 0.8;">AI Pipeline</p>
+                     </div>
+                     <div>
+                        <h2 style="color: #c084fc; font-size: 2rem;">Real-time</h2>
+                        <p style="opacity: 0.8;">Analysis</p>
+                     </div>
+                  </div>
+
+               {% elif tab == 'about' %}
+                  <!-- ABOUT PAGE CONTENT - COVERS FULL PAGE -->
+                  <div class="about-container">
+                     <h1 class="section-title">Mission SpaceML</h1>
+                     
+                     <div class="problem-statement">
+                        <i class="ri-question-line" style="color: #4ade80; font-size: 1.5rem; margin-right: 0.5rem;"></i>
+                        <strong>Problem Statement:</strong> Identifying exoplanets from Kepler mission data is challenging due to imbalanced classes (more false positives than true candidates) and the need for accurate radius estimation of confirmed planets.
+                     </div>
+
+                     <!-- Step 1: Data Cleaning -->
+                     <div class="step-section">
+                        <div class="step-title">
+                           <i class="ri-database-2-line"></i> Step 1: Data Cleaning
+                        </div>
+                        <p>We cleaned the Kepler Object of Interest (KOI) dataset by:</p>
+                        <ul style="margin-left: 1.5rem; opacity: 0.9;">
+                           <li>Removing rows with missing values</li>
+                           <li>Handling outliers in key features like transit depth and duration</li>
+                           <li>Encoding categorical variables</li>
+                           <li>Feature selection based on correlation analysis</li>
+                        </ul>
+                     </div>
+
+                     <!-- Step 2: Class Imbalance -->
+                     <div class="step-section">
+                        <div class="step-title">
+                           <i class="ri-bar-chart-2-line"></i> Step 2: Addressing Class Imbalance
+                        </div>
+                        <p>The dataset had significant class imbalance:</p>
+                        
+                        <div class="class-distribution">
+                           <div class="class-item">
+                              <div class="class-value class-0">4,839</div>
+                              <div class="class-label">False Positives (Class 0)</div>
+                           </div>
+                           <div class="class-item">
+                              <div class="class-value class-1">2,746</div>
+                              <div class="class-label">Candidates (Class 1)</div>
+                           </div>
+                        </div>
+                        
+                        <div class="smooth-badge">
+                           <i class="ri-flask-line"></i> SMOTE Technique Applied
+                        </div>
+                        <p style="margin-top: 1rem;">We used SMOTE (Synthetic Minority Over-sampling Technique) to balance the classes, creating synthetic samples of the minority class to prevent model bias.</p>
+                        
+                        <!-- Simple visualization representation -->
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin: 1.5rem 0; flex-wrap: wrap;">
+                           <div style="text-align: center;">
+                              <div style="width: 50px; height: 90px; background: #ff6b6b; border-radius: 5px; margin: 0 auto;"></div>
+                              <div style="margin-top: 0.5rem;">Class 0: 4839</div>
+                           </div>
+                           <div style="text-align: center;">
+                              <div style="width: 50px; height: 50px; background: #4ade80; border-radius: 5px; margin: 0 auto;"></div>
+                              <div style="margin-top: 0.5rem;">Class 1: 2746</div>
+                           </div>
+                           <div style="font-size: 2rem; color: #4ade80;">→</div>
+                           <div style="text-align: center;">
+                              <div style="width: 50px; height: 90px; background: #ff6b6b; border-radius: 5px; margin: 0 auto;"></div>
+                              <div style="margin-top: 0.5rem;">Class 0: 4839</div>
+                           </div>
+                           <div style="text-align: center;">
+                              <div style="width: 50px; height: 90px; background: #4ade80; border-radius: 5px; margin: 0 auto;"></div>
+                              <div style="margin-top: 0.5rem;">Class 1: 4839</div>
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- Step 3: Feature Scaling -->
+                     <div class="step-section">
+                        <div class="step-title">
+                           <i class="ri-scales-3-line"></i> Step 3: Feature Scaling
+                        </div>
+                        <p>We applied StandardScaler to normalize features for regression models. Classification models were trained on unscaled data to preserve interpretability.</p>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                           <span class="encoding-badge">Classification: No scaling</span>
+                           <span class="encoding-badge">Regression: StandardScaler</span>
+                        </div>
+                     </div>
+
+                     <!-- Step 4: Classification Models -->
+                     <div class="step-section">
+                        <div class="step-title">
+                           <i class="ri-shield-check-line"></i> Step 4: Classification Model Comparison
+                        </div>
+                        <p>We tested multiple classification algorithms. Metrics shown: Accuracy, Precision, Recall, F1-Score, and Training Time (s).</p>
+                        
+                        <div class="table-container">
+                           <table class="model-table">
+                              <thead>
+                                 <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Time (s)</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr class="best-model">
+                                    <td><strong>XGBClassifier</strong></td>
+                                    <td>0.95</td>
+                                    <td>0.95</td>
+                                    <td>0.95</td>
+                                    <td>0.95</td>
+                                    <td>0.73</td>
+                                 </tr>
+                                 <tr>
+                                    <td>LGBMClassifier</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.32</td>
+                                 </tr>
+                                 <tr>
+                                    <td>RandomForestClassifier</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>3.56</td>
+                                 </tr>
+                                 <tr>
+                                    <td>ExtraTreesClassifier</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.94</td>
+                                    <td>0.87</td>
+                                 </tr>
+                                 <tr>
+                                    <td>BaggingClassifier</td>
+                                    <td>0.93</td>
+                                    <td>0.93</td>
+                                    <td>0.93</td>
+                                    <td>0.93</td>
+                                    <td>1.00</td>
+                                 </tr>
+                                 <tr>
+                                    <td>DecisionTreeClassifier</td>
+                                    <td>0.91</td>
+                                    <td>0.91</td>
+                                    <td>0.91</td>
+                                    <td>0.91</td>
+                                    <td>0.19</td>
+                                 </tr>
+                                 <tr>
+                                    <td>AdaBoostClassifier</td>
+                                    <td>0.88</td>
+                                    <td>0.89</td>
+                                    <td>0.89</td>
+                                    <td>0.88</td>
+                                    <td>0.81</td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <div class="metrics-note">✓ Best Model: XGBClassifier (Selected for deployment)</div>
+                     </div>
+
+                     <!-- Step 5: Regression Models -->
+                     <div class="step-section reg-section">
+                        <div class="step-title">
+                           <i class="ri-ruler-line"></i> Step 5: Regression Model Comparison
+                        </div>
+                        <p>For planet radius estimation (koi_prad), we evaluated multiple regressors. Metrics shown: R², Adjusted R², RMSE, and Training Time (s).</p>
+                        
+                        <div class="table-container">
+                           <table class="model-table">
+                              <thead>
+                                 <tr>
+                                    <th>Model</th>
+                                    <th>R²</th>
+                                    <th>Adj. R²</th>
+                                    <th>RMSE</th>
+                                    <th>Time (s)</th>
+                                 </tr>
+                              </thead>
+                              <tbody>
+                                 <tr class="best-model">
+                                    <td><strong>ExtraTreesRegressor</strong></td>
+                                    <td>0.97</td>
+                                    <td>0.97</td>
+                                    <td>0.61</td>
+                                    <td>0.91</td>
+                                 </tr>
+                                 <tr>
+                                    <td>XGBRegressor</td>
+                                    <td>0.89</td>
+                                    <td>0.89</td>
+                                    <td>1.12</td>
+                                    <td>0.74</td>
+                                 </tr>
+                                 <tr>
+                                    <td>RandomForestRegressor</td>
+                                    <td>0.84</td>
+                                    <td>0.84</td>
+                                    <td>1.36</td>
+                                    <td>3.75</td>
+                                 </tr>
+                                 <tr>
+                                    <td>BaggingRegressor</td>
+                                    <td>0.83</td>
+                                    <td>0.83</td>
+                                    <td>1.39</td>
+                                    <td>0.34</td>
+                                 </tr>
+                                 <tr>
+                                    <td>GradientBoostingRegressor</td>
+                                    <td>0.82</td>
+                                    <td>0.82</td>
+                                    <td>1.42</td>
+                                    <td>1.08</td>
+                                 </tr>
+                              </tbody>
+                           </table>
+                        </div>
+                        <div class="metrics-note">✓ Best Model: ExtraTreesRegressor (Selected for deployment)</div>
+                     </div>
+
+                     <!-- Encoding Note -->
+                     <div style="margin: 2rem 0; padding: 1rem; background: rgba(255, 255, 255, 0.03); border-radius: 10px;">
+                        <h3 style="color: #60a5fa;">Encoding Summary</h3>
+                        <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1rem;">
+                           <div>
+                              <span class="encoding-badge">Classification: Label Encoding</span>
+                              <span class="encoding-badge">No feature scaling</span>
+                           </div>
+                           <div>
+                              <span class="encoding-badge">Regression: StandardScaler</span>
+                              <span class="encoding-badge">Target scaling applied</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     <!-- Team Members Section -->
+                     <h2 class="team-main-title">Our Team</h2>
+                     <div class="team-grid">
+                        <!-- Vedant Bharne -->
+                        <div class="team-member">
+                           <i class="ri-user-star-line"></i>
+                           <h4>Vedant Bharne</h4>
+                           <div class="team-contact-info">
+                              <div class="team-contact">
+                                 <i class="ri-mail-line"></i>
+                                 <span class="empty-contact">[Email]</span>
+                              </div>
+                              <div class="team-contact">
+                                 <i class="ri-phone-line"></i>
+                                 <span class="empty-contact">[Phone]</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        <!-- Om Thaware -->
+                        <div class="team-member">
+                           <i class="ri-code-line"></i>
+                           <h4>Om Thaware</h4>
+                           <div class="team-contact-info">
+                              <div class="team-contact">
+                                 <i class="ri-mail-line"></i>
+                                 <span>omthaware.23@stvincentngp.edu.in</span>
+                              </div>
+                              <div class="team-contact">
+                                 <i class="ri-phone-line"></i>
+                                 <span>8530879129</span>
+                              </div>
+                           </div>
+                        </div>
+
+                        <!-- Nayan Dadulkar -->
+                        <div class="team-member">
+                           <i class="ri-palette-line"></i>
+                           <h4>Nayan Dadulkar</h4>
+                           <div class="team-contact-info">
+                              <div class="team-contact">
+                                 <i class="ri-mail-line"></i>
+                                 <span class="empty-contact">[Email]</span>
+                              </div>
+                              <div class="team-contact">
+                                 <i class="ri-phone-line"></i>
+                                 <span class="empty-contact">[Phone]</span>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
+               {% elif tab == 'history' %}
+                  <!-- HISTORY TAB -->
+                  <div class="history-container">
+                     <h1 class="history-title">Analysis History</h1>
+                     <div class="session-badge">
+                        <i class="ri-timer-line"></i> Session-based history (clears when you close the browser)
+                     </div>
+                     <div id="historyList" class="history-list">
+                        <!-- History items will be populated by JavaScript -->
+                     </div>
+                     <div style="text-align: center;">
+                        <button onclick="clearHistory()" class="clear-history-btn">
+                           <i class="ri-delete-bin-line"></i> Clear History
+                        </button>
+                     </div>
+                  </div>
+
+               {% elif tab == 'analysis' %}
+                  <!-- MAIN CONTAINER - ONLY FORM (centered) -->
+                  <div class="analysis__container">
+                     
+                     <!-- CENTERED FORM -->
+                     <div class="analysis__form-box">
+                        {% if not show_reg_form and not result and not message and not show_visualization %}
+                           <h1 class="form-title">Exoplanet Classification</h1>
+                           <p class="form-subtitle">Enter stellar and transit parameters</p>
+                           
+                           <form id="classificationForm" action="/classify" method="POST" class="analysis__grid">
+                              <input type="number" step="any" name="koi_period" class="analysis__input" placeholder="Orbital Period (days)" required>
+                              <input type="number" step="any" name="koi_impact" class="analysis__input" placeholder="Impact Parameter" required>
+                              <input type="number" step="any" name="koi_duration" class="analysis__input" placeholder="Transit Duration (hrs)" required>
+                              <input type="number" step="any" name="koi_depth" class="analysis__input" placeholder="Transit Depth (ppm)" required>
+                              <input type="number" step="any" name="koi_model_snr" class="analysis__input" placeholder="Signal-to-Noise Ratio" required>
+                              <input type="number" step="any" name="koi_steff" class="analysis__input" placeholder="Stellar Temp (K)" required>
+                              <input type="number" step="any" name="koi_slogg" class="analysis__input" placeholder="Stellar Gravity (log g)" required>
+                              <input type="number" step="any" name="koi_srad" class="analysis__input" placeholder="Stellar Radius (R☉)" required>
+                              <input type="number" step="any" name="koi_teq" class="analysis__input" placeholder="Equilibrium Temp (K)" required>
+                              <button type="submit" class="detect-btn" onclick="storeCurrentParams()">
+                                 <i class="ri-search-line"></i> Detect Planet
+                              </button>
+                           </form>
+                           <div class="button-container">
+                              <a href="/reset" class="reset-btn">
+                                 <i class="ri-restart-line"></i> Reset
+                              </a>
+                           </div>
+
+                        {% elif show_reg_form %}
+                           <h1 class="form-title">Planet Confirmed!</h1>
+                           <div class="result-icon">✅</div>
+                           <p style="margin-bottom: 1rem; color: #4ade80; font-size: 1rem; text-align: center;" id="classificationResult">
+                              {{ result }}
+                           </p>
+                           <p style="margin-bottom: 0.5rem; font-size: 0.8rem; text-align: center;">Enter insolation flux:</p>
+                           <form id="regressionForm" action="/regress" method="POST" onsubmit="return storeRegressionResult()">
+                              <input type="number" step="any" name="koi_insol" class="analysis__input" 
+                                     placeholder="Insolation Flux (Earth = 1)" required 
+                                     style="margin-bottom: 0.8rem; width: 100%;">
+                              <button type="submit" class="detect-btn" style="width: 100%;">
+                                 <i class="ri-earth-line"></i> Calculate Radius
+                              </button>
+                           </form>
+                           <div style="text-align: center; margin-top: 0.5rem;">
+                              <a href="/reset" class="reset-btn">
+                                 <i class="ri-restart-line"></i> New Analysis
+                              </a>
+                           </div>
+
+                        {% elif show_visualization %}
+                           <h1 class="form-title">Analysis Complete</h1>
+                           <div style="margin-bottom: 0.5rem; text-align: center;" id="regressionResult">
+                              <span style="color: #4ade80; font-size: 1.2rem;">{{ result }}</span>
+                           </div>
+                           {{ visualization | safe }}
+                           <div style="text-align: center; margin-top: 0.5rem;">
+                              <a href="/reset" class="reset-btn">
+                                 <i class="ri-restart-line"></i> New Analysis
+                              </a>
+                           </div>
+                           <script>
+                              // Store regression result in history
+                              setTimeout(function() {
+                                 const resultElement = document.getElementById('regressionResult');
+                                 if (resultElement) {
+                                    const result = resultElement.innerText.trim();
+                                    storeInHistory('regression', result);
+                                 }
+                              }, 500);
+                           </script>
+
+                        {% else %}
+                           <h1 class="form-title">System Ready</h1>
+                           {% if message %}
+                              <p style="color: #ff6b6b; margin-bottom: 0.5rem; text-align: center;">{{ message }}</p>
+                           {% endif %}
+                           <div style="text-align: center;">
+                              <a href="/analysis" class="detect-btn" style="display: inline-block; padding: 12px 30px; text-decoration: none;">
+                                 <i class="ri-restart-line"></i> Start New Scan
+                              </a>
+                           </div>
+                        {% endif %}
+                     </div>
+                  </div>
+               {% endif %}
+            </div>
+
+            {% if tab != 'analysis' and tab != 'about' and tab != 'history' %}
+            <div class="home__images">
+               <img src="{{ url_for('static', filename='img/rocket.svg') }}" alt="Rocket" class="home__rocket" id="rocket">
+               <img src="{{ url_for('static', filename='img/planet.svg') }}" alt="Planet" class="home__planet-1">
+               <img src="{{ url_for('static', filename='img/planet.svg') }}" alt="Planet" class="home__planet-2">
+            </div>
+            {% endif %}
+         </div>
+      </section>
+   </main>
+
+   <script src="{{ url_for('static', filename='js/gsap.min.js') }}"></script>
+   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+   
+   <script>
+      // Session-based history management
+      let currentParams = {};
+      const SESSION_KEY = 'spaceml_session_history';
+      const SESSION_ID_KEY = 'spaceml_session_id';
+
+      // Generate or get session ID
+      function getSessionId() {
+         let sessionId = sessionStorage.getItem(SESSION_ID_KEY);
+         if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            sessionStorage.setItem(SESSION_ID_KEY, sessionId);
+            // Clear any old history when new session starts
+            sessionStorage.removeItem(SESSION_KEY);
+         }
+         return sessionId;
+      }
+
+      // Store in session storage (clears when browser tab is closed)
+      function storeInHistory(type, result) {
+         // Get session ID to ensure this session's history
+         const sessionId = getSessionId();
+         
+         // Get existing history from sessionStorage
+         let history = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || [];
+         
+         // Get current parameters from the form
+         const form = document.getElementById('classificationForm');
+         if (form && Object.keys(currentParams).length === 0) {
+            currentParams = {
+               koi_period: form.koi_period?.value || 'N/A',
+               koi_impact: form.koi_impact?.value || 'N/A',
+               koi_duration: form.koi_duration?.value || 'N/A',
+               koi_depth: form.koi_depth?.value || 'N/A',
+               koi_model_snr: form.koi_model_snr?.value || 'N/A',
+               koi_steff: form.koi_steff?.value || 'N/A',
+               koi_slogg: form.koi_slogg?.value || 'N/A',
+               koi_srad: form.koi_srad?.value || 'N/A',
+               koi_teq: form.koi_teq?.value || 'N/A'
+            };
+         }
+         
+         // Add insol if available
+         const insolInput = document.querySelector('input[name="koi_insol"]');
+         if (insolInput && insolInput.value) {
+            currentParams.koi_insol = insolInput.value;
+         }
+         
+         // Create new history item
+         const timestamp = new Date().toLocaleString();
+         const item = {
+            sessionId: sessionId,
+            timestamp: timestamp,
+            type: type,
+            result: result,
+            params: { ...currentParams }
+         };
+         
+         // Add to beginning of array
+         history.unshift(item);
+         
+         // Keep only last 5 items
+         if (history.length > 5) {
+            history = history.slice(0, 5);
+         }
+         
+         // Save to sessionStorage (clears when tab is closed)
+         sessionStorage.setItem(SESSION_KEY, JSON.stringify(history));
+         
+         // Clear current params
+         currentParams = {};
+      }
+
+      function storeCurrentParams() {
+         // Store current form parameters before submission
+         const form = document.getElementById('classificationForm');
+         if (form) {
+            currentParams = {
+               koi_period: form.koi_period.value,
+               koi_impact: form.koi_impact.value,
+               koi_duration: form.koi_duration.value,
+               koi_depth: form.koi_depth.value,
+               koi_model_snr: form.koi_model_snr.value,
+               koi_steff: form.koi_steff.value,
+               koi_slogg: form.koi_slogg.value,
+               koi_srad: form.koi_srad.value,
+               koi_teq: form.koi_teq.value
+            };
+         }
+         return true;
+      }
+
+      function storeRegressionResult() {
+         // Store regression parameters
+         const insol = document.querySelector('input[name="koi_insol"]')?.value;
+         if (insol) {
+            currentParams.koi_insol = insol;
+         }
+         return true;
+      }
+
+      function loadHistory() {
+         const historyList = document.getElementById('historyList');
+         if (!historyList) return;
+         
+         // Get current session ID
+         const sessionId = getSessionId();
+         
+         // Get history from sessionStorage
+         const history = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || [];
+         
+         if (history.length === 0) {
+            historyList.innerHTML = '<div class="no-history"><i class="ri-history-line"></i> No analysis history in this session. Start exploring!</div>';
+            return;
+         }
+         
+         let html = '';
+         history.forEach((item, index) => {
+            const resultClass = item.result && item.result.includes('FALSE') ? 'false-positive' : '';
+            
+            html += `
+               <div class="history-item">
+                  <div class="history-item-header">
+                     <span class="history-timestamp"><i class="ri-time-line"></i> ${item.timestamp}</span>
+                     <span class="history-result ${resultClass}">${item.result || 'N/A'}</span>
+                  </div>
+                  <div class="history-params">
+            `;
+            
+            // Add parameters
+            if (item.params) {
+               for (const [key, value] of Object.entries(item.params)) {
+                  if (value && value !== 'N/A') {
+                     const shortKey = key.replace('koi_', '');
+                     html += `<span class="history-param">${shortKey}: ${value}</span>`;
+                  }
+               }
+            }
+            
+            html += `
+                  </div>
+               </div>
+            `;
+         });
+         
+         historyList.innerHTML = html;
+      }
+
+      function clearHistory() {
+         if (confirm('Are you sure you want to clear this session\'s history?')) {
+            sessionStorage.removeItem(SESSION_KEY);
+            loadHistory();
+         }
+      }
+
+      // Load history when on history tab
+      {% if tab == 'history' %}
+         document.addEventListener('DOMContentLoaded', loadHistory);
+      {% endif %}
+
+      // Store classification result in history
+      {% if tab == 'analysis' and result and not show_visualization and not show_reg_form %}
+         setTimeout(function() {
+            const result = "{{ result }}".trim();
+            if (result) {
+               storeInHistory('classification', result);
+            }
+         }, 500);
+      {% endif %}
+
+      // Additional animations
+      {% if tab == 'analysis' %}
+         gsap.from('.analysis__form-box', {opacity: 0, y: 20, duration: 0.6, delay: 0.2});
+      {% endif %}
+      
+      {% if tab == 'about' %}
+         gsap.from('.about-container', {opacity: 0, y: 30, duration: 0.8, delay: 0.2});
+         gsap.from('.step-section', {opacity: 0, y: 20, duration: 0.5, stagger: 0.15, delay: 0.4});
+         gsap.from('.team-member', {opacity: 0, scale: 0.9, duration: 0.5, stagger: 0.2, delay: 0.8});
+      {% endif %}
+      
+      {% if tab == 'history' %}
+         gsap.from('.history-container', {opacity: 0, y: 30, duration: 0.8, delay: 0.2});
+      {% endif %}
+      
+      // Rocket animation for home page
+      {% if tab == 'home' %}
+         gsap.to('.home__rocket', {
+            y: -20,
+            rotation: -5,
+            repeat: -1,
+            yoyo: true,
+            duration: 3,
+            ease: "sine.inOut"
+         });
+      {% endif %}
+   </script>
+</body>
+</html>
