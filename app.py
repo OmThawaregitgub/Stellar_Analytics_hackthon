@@ -77,7 +77,7 @@ def earth_radius_visualization(radius_earth_radii):
     # Size for visualization (max 150px)
     display_size = min(150, max(30, radius_earth_radii * 20))
     
-    # Create SVG visualization
+    # Create visualization
     visualization = f"""
     <div class="radius-visualization" style="text-align: center; margin: 20px 0;">
         <div style="position: relative; width: 100%; display: flex; justify-content: center;">
@@ -152,7 +152,6 @@ def analysis():
 
 @app.route('/history')
 def history():
-    # Just render the template with history tab active
     return render_template('index.html', tab='history')
 
 @app.route('/classify', methods=['POST'])
@@ -187,7 +186,7 @@ def classify():
         is_planet = prediction == 0
         
         if is_planet:
-            # Show regression form
+            # Show regression form for planet candidates
             return render_template('index.html', tab='analysis', 
                                  show_reg_form=True,
                                  result="✅ PLANET CANDIDATE DETECTED",
@@ -207,9 +206,13 @@ def classify():
 def regress():
     try:
         # Check if this is a valid planet candidate
-        if 'prediction' not in session or session['prediction'] != 0:
+        if 'prediction' not in session:
             return render_template('index.html', tab='analysis',
-                                 message="Invalid session. Only confirmed planets can calculate radius.")
+                                 message="Session expired. Please start a new analysis.")
+        
+        if session['prediction'] != 0:
+            return render_template('index.html', tab='analysis',
+                                 message="Invalid operation. Only confirmed planets can calculate radius.")
         
         # Get insol from form
         koi_insol = float(request.form.get('koi_insol'))
