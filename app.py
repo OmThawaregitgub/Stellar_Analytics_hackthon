@@ -10,19 +10,30 @@ app.secret_key = 'spaceml_secret_key_2024'
 # Load models and scalers
 MODELS_PATH = 'models'
 
+print("="*50)
+print("Loading models...")
+print("="*50)
+
 # Classification model (no scaling needed)
 with open(os.path.join(MODELS_PATH, 'classification_model.pkl'), 'rb') as f:
     classification_model = pickle.load(f)
+    print(f"Classification model loaded: {type(classification_model)}")
+    print(f"Model classes: {classification_model.classes_}")
 
 # Regression model and scalers
 with open(os.path.join(MODELS_PATH, 'regression_model.pkl'), 'rb') as f:
     regression_model = pickle.load(f)
+    print(f"Regression model loaded: {type(regression_model)}")
 
 with open(os.path.join(MODELS_PATH, 'x_scaler.pkl'), 'rb') as f:
     x_scaler = pickle.load(f)
+    print("X_scaler loaded")
 
 with open(os.path.join(MODELS_PATH, 'y_scaler.pkl'), 'rb') as f:
     y_scaler = pickle.load(f)
+    print("Y_scaler loaded")
+
+print("="*50)
 
 # Classification features (no scaling required)
 CLASS_FEATURES = [
@@ -174,6 +185,13 @@ def classify():
         # Make prediction - get the raw prediction value
         prediction = classification_model.predict(X)[0]
         
+        # Try to get probability if available
+        try:
+            probabilities = classification_model.predict_proba(X)[0]
+            confidence = max(probabilities) * 100
+        except:
+            confidence = 0
+        
         # Convert numpy types to Python native types
         prediction = int(prediction)
         
@@ -182,7 +200,16 @@ def classify():
         session['feature_dict'] = feature_dict
         session['prediction'] = prediction
         
-        # 0 = CANDIDATE, 1 = FALSE POSITIVE (based on debug output)
+        # DEBUG: Print to console (visible in Render logs)
+        print(f"\n{'='*50}")
+        print(f"CLASSIFICATION DEBUG:")
+        print(f"Features: {feature_dict}")
+        print(f"Prediction value: {prediction}")
+        print(f"Prediction type: {type(prediction)}")
+        print(f"Model classes: {classification_model.classes_}")
+        print(f"{'='*50}\n")
+        
+        # FIXED: Based on your model, 0 = CANDIDATE, 1 = FALSE POSITIVE
         is_planet = prediction == 0
         
         if is_planet:
@@ -190,15 +217,20 @@ def classify():
             return render_template('index.html', tab='analysis', 
                                  show_reg_form=True,
                                  result="✅ PLANET CANDIDATE DETECTED",
+                                 confidence=f"{confidence:.1f}%",
                                  features=feature_dict)
         else:
             # For false positives, show message and DO NOT show regression form
             return render_template('index.html', tab='analysis',
                                  result="❌ FALSE POSITIVE",
                                  message="No planet detected. This is likely a false positive. Try different parameters.",
+                                 confidence=f"{confidence:.1f}%",
                                  features=feature_dict)
     
     except Exception as e:
+        print(f"ERROR in classify: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return render_template('index.html', tab='analysis',
                              message=f"Error: {str(e)}")
 
@@ -210,6 +242,7 @@ def regress():
             return render_template('index.html', tab='analysis',
                                  message="Session expired. Please start a new analysis.")
         
+        # FIXED: Only allow regression if prediction == 0 (candidate)
         if session['prediction'] != 0:
             return render_template('index.html', tab='analysis',
                                  message="Invalid operation. Only confirmed planets can calculate radius.")
@@ -254,6 +287,9 @@ def regress():
                              features=feature_dict)
     
     except Exception as e:
+        print(f"ERROR in regress: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return render_template('index.html', tab='analysis',
                              message=f"Error: {str(e)}")
 
