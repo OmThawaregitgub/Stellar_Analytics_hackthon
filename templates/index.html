@@ -1047,11 +1047,11 @@
                            <div class="team-contact-info">
                               <div class="team-contact">
                                  <i class="ri-mail-line"></i>
-                                 <span class="empty-contact">[Email]</span>
+                                 <span class="empty-contact">vedantbharne.23@stvincentngp.edu.in</span>
                               </div>
                               <div class="team-contact">
                                  <i class="ri-phone-line"></i>
-                                 <span class="empty-contact">[Phone]</span>
+                                 <span class="empty-contact">9921738556</span>
                               </div>
                            </div>
                         </div>
@@ -1079,11 +1079,11 @@
                            <div class="team-contact-info">
                               <div class="team-contact">
                                  <i class="ri-mail-line"></i>
-                                 <span class="empty-contact">[Email]</span>
+                                 <span class="empty-contact">nayandadulkar.23@stvincentngp.edu.in</span>
                               </div>
                               <div class="team-contact">
                                  <i class="ri-phone-line"></i>
-                                 <span class="empty-contact">[Phone]</span>
+                                 <span class="empty-contact">9309532899</span>
                               </div>
                            </div>
                         </div>
@@ -1169,16 +1169,6 @@
                                  <i class="ri-restart-line"></i> New Analysis
                               </a>
                            </div>
-                           <script>
-                              // Store regression result in history
-                              setTimeout(function() {
-                                 const resultElement = document.getElementById('regressionResult');
-                                 if (resultElement) {
-                                    const result = resultElement.innerText.trim();
-                                    storeInHistory('regression', result);
-                                 }
-                              }, 500);
-                           </script>
 
                         {% else %}
                            <h1 class="form-title">System Ready</h1>
@@ -1209,10 +1199,11 @@
 
    <script src="{{ url_for('static', filename='js/gsap.min.js') }}"></script>
    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-   
+
    <script>
       // Session-based history management
       let currentParams = {};
+      let lastPredictionWasPlanet = false;
       const SESSION_KEY = 'spaceml_session_history';
       const SESSION_ID_KEY = 'spaceml_session_id';
 
@@ -1222,7 +1213,6 @@
          if (!sessionId) {
             sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             sessionStorage.setItem(SESSION_ID_KEY, sessionId);
-            // Clear any old history when new session starts
             sessionStorage.removeItem(SESSION_KEY);
          }
          return sessionId;
@@ -1230,10 +1220,13 @@
 
       // Store in session storage (clears when browser tab is closed)
       function storeInHistory(type, result) {
-         // Get session ID to ensure this session's history
-         const sessionId = getSessionId();
+         // Only store if this was a planet candidate (not false positive)
+         if (!lastPredictionWasPlanet && type === 'regression') {
+            console.log('Skipping history for false positive');
+            return;
+         }
          
-         // Get existing history from sessionStorage
+         const sessionId = getSessionId();
          let history = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || [];
          
          // Get current parameters from the form
@@ -1252,13 +1245,11 @@
             };
          }
          
-         // Add insol if available
          const insolInput = document.querySelector('input[name="koi_insol"]');
          if (insolInput && insolInput.value) {
             currentParams.koi_insol = insolInput.value;
          }
          
-         // Create new history item
          const timestamp = new Date().toLocaleString();
          const item = {
             sessionId: sessionId,
@@ -1268,23 +1259,18 @@
             params: { ...currentParams }
          };
          
-         // Add to beginning of array
          history.unshift(item);
          
-         // Keep only last 5 items
          if (history.length > 5) {
             history = history.slice(0, 5);
          }
          
-         // Save to sessionStorage (clears when tab is closed)
          sessionStorage.setItem(SESSION_KEY, JSON.stringify(history));
-         
-         // Clear current params
          currentParams = {};
+         lastPredictionWasPlanet = false;
       }
 
       function storeCurrentParams() {
-         // Store current form parameters before submission
          const form = document.getElementById('classificationForm');
          if (form) {
             currentParams = {
@@ -1303,7 +1289,6 @@
       }
 
       function storeRegressionResult() {
-         // Store regression parameters
          const insol = document.querySelector('input[name="koi_insol"]')?.value;
          if (insol) {
             currentParams.koi_insol = insol;
@@ -1315,10 +1300,7 @@
          const historyList = document.getElementById('historyList');
          if (!historyList) return;
          
-         // Get current session ID
          const sessionId = getSessionId();
-         
-         // Get history from sessionStorage
          const history = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || [];
          
          if (history.length === 0) {
@@ -1327,7 +1309,7 @@
          }
          
          let html = '';
-         history.forEach((item, index) => {
+         history.forEach((item) => {
             const resultClass = item.result && item.result.includes('FALSE') ? 'false-positive' : '';
             
             html += `
@@ -1339,7 +1321,6 @@
                   <div class="history-params">
             `;
             
-            // Add parameters
             if (item.params) {
                for (const [key, value] of Object.entries(item.params)) {
                   if (value && value !== 'N/A') {
@@ -1370,12 +1351,31 @@
          document.addEventListener('DOMContentLoaded', loadHistory);
       {% endif %}
 
-      // Store classification result in history
+      // Store classification result in history - ONLY FOR PLANET CANDIDATES
       {% if tab == 'analysis' and result and not show_visualization and not show_reg_form %}
          setTimeout(function() {
             const result = "{{ result }}".trim();
-            if (result) {
+            // Check if this is a planet candidate (not false positive)
+            if (result && result.includes('✅')) {
+               lastPredictionWasPlanet = true;
                storeInHistory('classification', result);
+            } else {
+               lastPredictionWasPlanet = false;
+               console.log('False positive - not storing in history');
+            }
+         }, 500);
+      {% endif %}
+
+      // Store regression result in history - ONLY FOR PLANET CANDIDATES
+      {% if tab == 'analysis' and show_visualization %}
+         setTimeout(function() {
+            const resultElement = document.getElementById('regressionResult');
+            if (resultElement) {
+               const result = resultElement.innerText.trim();
+               // Only store if we have a valid planet candidate
+               if (result && !result.includes('Unknown')) {
+                  storeInHistory('regression', result);
+               }
             }
          }, 500);
       {% endif %}
