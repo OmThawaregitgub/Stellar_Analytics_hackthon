@@ -148,17 +148,18 @@ def about():
 
 @app.route('/analysis')
 def analysis():
+    # Clear session when starting new analysis
     session.clear()
     return render_template('index.html', tab='analysis')
 
 @app.route('/history')
 def history():
-    """History page route"""
     return render_template('index.html', tab='history')
 
 @app.route('/classify', methods=['POST'])
 def classify():
     try:
+        # Get form data
         features = []
         feature_dict = {}
         for feature in CLASS_FEATURES:
@@ -169,91 +170,91 @@ def classify():
             features.append(float(value))
             feature_dict[feature] = float(value)
         
+        # Convert to numpy array and reshape
         X = np.array(features).reshape(1, -1)
-        prediction = classification_model.predict(X)[0]
         
+        # Make prediction
+        prediction = classification_model.predict(X)[0]
+        prediction = int(prediction)
+        
+        # Get confidence if available
         try:
             probabilities = classification_model.predict_proba(X)[0]
             confidence = max(probabilities) * 100
         except:
             confidence = 0
         
-        prediction = int(prediction)
-        
+        # Store in session
         session['classification_features'] = [float(f) for f in features]
         session['feature_dict'] = feature_dict
         session['prediction'] = prediction
         
-        print(f"\n{'='*50}")
-        print(f"CLASSIFICATION DEBUG:")
-        print(f"Features: {feature_dict}")
-        print(f"Prediction value: {prediction}")
-        print(f"Model classes: {classification_model.classes_}")
-        print(f"{'='*50}\n")
-        
-        # FIXED: 0 = CANDIDATE, 1 = FALSE POSITIVE
+        # 0 = CANDIDATE, 1 = FALSE POSITIVE (based on model classes)
         is_planet = prediction == 0
         
         if is_planet:
-            return render_template('index.html', tab='analysis', 
+            # Planet detected - show regression form
+            return render_template('index.html', 
+                                 tab='analysis', 
                                  show_reg_form=True,
                                  result="✅ PLANET CANDIDATE DETECTED",
-                                 confidence=f"{confidence:.1f}%",
-                                 features=feature_dict)
+                                 confidence=f"{confidence:.1f}%")
         else:
-            return render_template('index.html', tab='analysis',
+            # No planet - show message only
+            return render_template('index.html', 
+                                 tab='analysis',
                                  result="❌ FALSE POSITIVE",
-                                 message="No planet detected. This is likely a false positive. Try different parameters.",
-                                 confidence=f"{confidence:.1f}%",
-                                 features=feature_dict)
+                                 message="No planet detected. This is a false positive. Try different parameters.")
     
     except Exception as e:
         print(f"ERROR in classify: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return render_template('index.html', tab='analysis',
                              message=f"Error: {str(e)}")
 
 @app.route('/regress', methods=['POST'])
 def regress():
     try:
+        # Check if this is a valid planet candidate
         if 'prediction' not in session:
             return render_template('index.html', tab='analysis',
                                  message="Session expired. Please start a new analysis.")
         
+        # Only allow regression for planet candidates (prediction == 0)
         if session['prediction'] != 0:
             return render_template('index.html', tab='analysis',
                                  message="Invalid operation. Only confirmed planets can calculate radius.")
         
+        # Get insol from form
         koi_insol = float(request.form.get('koi_insol'))
         
-        if 'classification_features' not in session:
-            return render_template('index.html', tab='analysis',
-                                 message="Session expired. Please restart analysis.")
-        
+        # Get classification features from session
         features = session['classification_features']
         feature_dict = session.get('feature_dict', {})
         feature_dict['koi_insol'] = koi_insol
         
+        # Add insol to features
         features.append(koi_insol)
+        
+        # Convert to numpy array and scale
         X = np.array(features).reshape(1, -1)
         X_scaled = x_scaler.transform(X)
+        
+        # Make prediction
         y_pred_scaled = regression_model.predict(X_scaled)
         y_pred = y_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()[0]
         y_pred = float(y_pred)
         
+        # Generate visualization
         visualization = earth_radius_visualization(y_pred)
         
-        return render_template('index.html', tab='analysis',
+        return render_template('index.html', 
+                             tab='analysis',
                              result=f"🌍 {y_pred:.2f} R🜨",
                              visualization=visualization,
-                             show_visualization=True,
-                             features=feature_dict)
+                             show_visualization=True)
     
     except Exception as e:
         print(f"ERROR in regress: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return render_template('index.html', tab='analysis',
                              message=f"Error: {str(e)}")
 
