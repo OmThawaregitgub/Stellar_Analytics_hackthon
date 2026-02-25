@@ -800,7 +800,7 @@
                   </div>
 
                {% elif tab == 'about' %}
-                  <!-- ABOUT PAGE CONTENT - COVERS FULL PAGE -->
+                  <!-- ABOUT PAGE CONTENT -->
                   <div class="about-container">
                      <h1 class="section-title">Mission SpaceML</h1>
                      
@@ -1203,7 +1203,6 @@
    <script>
       // Session-based history management
       let currentParams = {};
-      let lastPredictionWasPlanet = false;
       const SESSION_KEY = 'spaceml_session_history';
       const SESSION_ID_KEY = 'spaceml_session_id';
 
@@ -1220,35 +1219,8 @@
 
       // Store in session storage (clears when browser tab is closed)
       function storeInHistory(type, result) {
-         // Only store if this was a planet candidate (not false positive)
-         if (!lastPredictionWasPlanet && type === 'regression') {
-            console.log('Skipping history for false positive');
-            return;
-         }
-         
          const sessionId = getSessionId();
          let history = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || [];
-         
-         // Get current parameters from the form
-         const form = document.getElementById('classificationForm');
-         if (form && Object.keys(currentParams).length === 0) {
-            currentParams = {
-               koi_period: form.koi_period?.value || 'N/A',
-               koi_impact: form.koi_impact?.value || 'N/A',
-               koi_duration: form.koi_duration?.value || 'N/A',
-               koi_depth: form.koi_depth?.value || 'N/A',
-               koi_model_snr: form.koi_model_snr?.value || 'N/A',
-               koi_steff: form.koi_steff?.value || 'N/A',
-               koi_slogg: form.koi_slogg?.value || 'N/A',
-               koi_srad: form.koi_srad?.value || 'N/A',
-               koi_teq: form.koi_teq?.value || 'N/A'
-            };
-         }
-         
-         const insolInput = document.querySelector('input[name="koi_insol"]');
-         if (insolInput && insolInput.value) {
-            currentParams.koi_insol = insolInput.value;
-         }
          
          const timestamp = new Date().toLocaleString();
          const item = {
@@ -1267,7 +1239,6 @@
          
          sessionStorage.setItem(SESSION_KEY, JSON.stringify(history));
          currentParams = {};
-         lastPredictionWasPlanet = false;
       }
 
       function storeCurrentParams() {
@@ -1310,7 +1281,7 @@
          
          let html = '';
          history.forEach((item) => {
-            const resultClass = item.result && item.result.includes('FALSE') ? 'false-positive' : '';
+            const resultClass = item.result && item.result.includes('❌') ? 'false-positive' : '';
             
             html += `
                <div class="history-item">
@@ -1351,29 +1322,23 @@
          document.addEventListener('DOMContentLoaded', loadHistory);
       {% endif %}
 
-      // Store classification result in history - ONLY FOR PLANET CANDIDATES
+      // Store classification result in history
       {% if tab == 'analysis' and result and not show_visualization and not show_reg_form %}
          setTimeout(function() {
             const result = "{{ result }}".trim();
-            // Check if this is a planet candidate (not false positive)
-            if (result && result.includes('✅')) {
-               lastPredictionWasPlanet = true;
+            if (result) {
                storeInHistory('classification', result);
-            } else {
-               lastPredictionWasPlanet = false;
-               console.log('False positive - not storing in history');
             }
          }, 500);
       {% endif %}
 
-      // Store regression result in history - ONLY FOR PLANET CANDIDATES
+      // Store regression result in history
       {% if tab == 'analysis' and show_visualization %}
          setTimeout(function() {
             const resultElement = document.getElementById('regressionResult');
             if (resultElement) {
                const result = resultElement.innerText.trim();
-               // Only store if we have a valid planet candidate
-               if (result && !result.includes('Unknown')) {
+               if (result) {
                   storeInHistory('regression', result);
                }
             }
