@@ -37,26 +37,6 @@ REG_FEATURES = [
     'koi_teq', 'koi_insol'
 ]
 
-def convert_numpy_types(obj):
-    """Convert NumPy types to Python native types for JSON serialization"""
-    if isinstance(obj, np.integer):
-        return int(obj)
-    elif isinstance(obj, np.floating):
-        return float(obj)
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
-        return {key: convert_numpy_types(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_numpy_types(item) for item in obj]
-    else:
-        return obj
-
-@app.route('/history')
-def history():
-    # Just render the template with history tab active
-    return render_template('index.html', tab='history')
-
 def earth_radius_visualization(radius_earth_radii):
     """
     Create Earth radius visualization HTML/CSS
@@ -162,7 +142,7 @@ def home():
 
 @app.route('/about')
 def about():
-    return render_template('about.html', tab='about')
+    return render_template('index.html', tab='about')
 
 @app.route('/analysis')
 def analysis():
@@ -170,17 +150,24 @@ def analysis():
     session.clear()
     return render_template('index.html', tab='analysis')
 
+@app.route('/history')
+def history():
+    # Just render the template with history tab active
+    return render_template('index.html', tab='history')
+
 @app.route('/classify', methods=['POST'])
 def classify():
     try:
         # Get form data
         features = []
+        feature_dict = {}
         for feature in CLASS_FEATURES:
             value = request.form.get(feature)
             if not value:
                 return render_template('index.html', tab='analysis', 
                                       message=f"Missing value for {feature}")
             features.append(float(value))
+            feature_dict[feature] = float(value)
         
         # Convert to numpy array and reshape
         X = np.array(features).reshape(1, -1)
@@ -193,20 +180,24 @@ def classify():
         
         # Store features in session for regression if needed
         session['classification_features'] = [float(f) for f in features]
+        session['feature_dict'] = feature_dict
         session['prediction'] = prediction
         
-        # FIXED: 0 = CANDIDATE, 1 = FALSE POSITIVE (based on debug output)
+        # 0 = CANDIDATE, 1 = FALSE POSITIVE (based on debug output)
         is_planet = prediction == 0
         
         if is_planet:
             # Show regression form
             return render_template('index.html', tab='analysis', 
                                  show_reg_form=True,
-                                 result="✅ PLANET CANDIDATE DETECTED")
+                                 result="✅ PLANET CANDIDATE DETECTED",
+                                 features=feature_dict)
         else:
+            # For false positives, show message and DO NOT show regression form
             return render_template('index.html', tab='analysis',
                                  result="❌ FALSE POSITIVE",
-                                 message="No planet detected. Try different parameters.")
+                                 message="No planet detected. This is likely a false positive. Try different parameters.",
+                                 features=feature_dict)
     
     except Exception as e:
         return render_template('index.html', tab='analysis',
@@ -215,6 +206,11 @@ def classify():
 @app.route('/regress', methods=['POST'])
 def regress():
     try:
+        # Check if this is a valid planet candidate
+        if 'prediction' not in session or session['prediction'] != 0:
+            return render_template('index.html', tab='analysis',
+                                 message="Invalid session. Only confirmed planets can calculate radius.")
+        
         # Get insol from form
         koi_insol = float(request.form.get('koi_insol'))
         
@@ -224,6 +220,8 @@ def regress():
                                  message="Session expired. Please restart analysis.")
         
         features = session['classification_features']
+        feature_dict = session.get('feature_dict', {})
+        feature_dict['koi_insol'] = koi_insol
         
         # Add insol to features
         features.append(koi_insol)
@@ -249,7 +247,8 @@ def regress():
         return render_template('index.html', tab='analysis',
                              result=f"🌍 {y_pred:.2f} R🜨",
                              visualization=visualization,
-                             show_visualization=True)
+                             show_visualization=True,
+                             features=feature_dict)
     
     except Exception as e:
         return render_template('index.html', tab='analysis',
