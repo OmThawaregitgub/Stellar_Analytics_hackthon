@@ -3,3 +3,4 @@ numpy>=1.26.4,<2.0
 scikit-learn==1.6.1
 gunicorn==21.2.0
 xgboost==2.0.3
+pandas>=2.1.4,<2.3
