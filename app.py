@@ -15,17 +15,17 @@ print("="*50)
 print("Loading models...")
 print("="*50)
 
-cls_model = joblib.load("models/classifier.pkl")
+cls_model = joblib.load("models/classification_model.pkl")
 print(f"✅ Classification model loaded: {type(cls_model)}")
 print(f"   Model classes: {cls_model.classes_}")
 
-reg_model = joblib.load("models/regressor.pkl")
+reg_model = joblib.load("models/regression_model.pkl")
 print(f"✅ Regression model loaded: {type(reg_model)}")
 
-x_scaler = joblib.load("models/scalar_x.pkl")
+x_scaler = joblib.load("models/x_scaler.pkl")
 print("✅ X_scaler loaded")
 
-y_scaler = joblib.load("models/scalar_y.pkl")
+y_scaler = joblib.load("models/y_scaler.pkl")
 print("✅ Y_scaler loaded")
 print("="*50)
 
@@ -394,4 +394,5 @@ def reset():
     return redirect(url_for('classification'))
 
 if __name__ == '__main__':
+
     app.run(debug=True, host='127.0.0.1', port=5000)
