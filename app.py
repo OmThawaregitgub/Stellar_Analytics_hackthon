@@ -1,62 +1,128 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+import joblib
 import numpy as np
-import pickle
+import pandas as pd
+from datetime import datetime
+import json
+import sqlite3
 import os
-import math
 
 app = Flask(__name__)
 app.secret_key = 'spaceml_secret_key_2024'
 
-# Load models and scalers
-MODELS_PATH = 'models'
-
+# ================= LOAD MODELS =================
 print("="*50)
 print("Loading models...")
 print("="*50)
 
-# Classification model (no scaling needed)
-with open(os.path.join(MODELS_PATH, 'classification_model.pkl'), 'rb') as f:
-    classification_model = pickle.load(f)
-    print(f"Classification model loaded: {type(classification_model)}")
-    print(f"Model classes: {classification_model.classes_}")
+cls_model = joblib.load("models/classifier.pkl")
+print(f"✅ Classification model loaded: {type(cls_model)}")
+print(f"   Model classes: {cls_model.classes_}")
 
-# Regression model and scalers
-with open(os.path.join(MODELS_PATH, 'regression_model.pkl'), 'rb') as f:
-    regression_model = pickle.load(f)
-    print(f"Regression model loaded: {type(regression_model)}")
+reg_model = joblib.load("models/regressor.pkl")
+print(f"✅ Regression model loaded: {type(reg_model)}")
 
-with open(os.path.join(MODELS_PATH, 'x_scaler.pkl'), 'rb') as f:
-    x_scaler = pickle.load(f)
-    print("X_scaler loaded")
+x_scaler = joblib.load("models/scalar_x.pkl")
+print("✅ X_scaler loaded")
 
-with open(os.path.join(MODELS_PATH, 'y_scaler.pkl'), 'rb') as f:
-    y_scaler = pickle.load(f)
-    print("Y_scaler loaded")
-
+y_scaler = joblib.load("models/scalar_y.pkl")
+print("✅ Y_scaler loaded")
 print("="*50)
 
-# Classification features (no scaling required)
-CLASS_FEATURES = [
-    'koi_period', 'koi_impact', 'koi_duration', 'koi_depth',
-    'koi_model_snr', 'koi_steff', 'koi_slogg', 'koi_srad', 'koi_teq'
-]
+# ================= DATABASE INITIALIZATION =================
+def init_db():
+    try:
+        conn = sqlite3.connect("cosmos.db")
+        cur = conn.cursor()
 
-# Regression features (need scaling)
-REG_FEATURES = [
-    'koi_period', 'koi_impact', 'koi_duration', 'koi_depth',
-    'koi_model_snr', 'koi_steff', 'koi_slogg', 'koi_srad',
-    'koi_teq', 'koi_insol'
-]
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS predictions(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            time TEXT,
+            label TEXT,
+            confidence REAL,
+            radius REAL,
+            planet_type TEXT,
+            koi_period REAL,
+            koi_time0bk REAL,
+            koi_impact REAL,
+            koi_duration REAL,
+            koi_depth REAL,
+            koi_model_snr REAL,
+            koi_steff REAL,
+            koi_slogg REAL,
+            koi_srad REAL,
+            koi_teq REAL,
+            koi_insol REAL
+        )
+        """)
 
+        conn.commit()
+        conn.close()
+        print("✅ Database initialized: cosmos.db")
+    except Exception as e:
+        print(f"❌ Database initialization error: {e}")
+
+# Initialize database at startup
+init_db()
+
+# ================= SAVE TO DATABASE =================
+def save_to_database(label, confidence, radius, planet_type, features_dict):
+    try:
+        conn = sqlite3.connect("cosmos.db")
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO predictions 
+            (time, label, confidence, radius, planet_type,
+             koi_period, koi_time0bk, koi_impact, koi_duration, koi_depth, 
+             koi_model_snr, koi_steff, koi_slogg, koi_srad, koi_teq, koi_insol)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            label,
+            float(confidence) if confidence else None,
+            float(radius) if radius else None,
+            planet_type,
+            float(features_dict.get('koi_period', 0)),
+            float(features_dict.get('koi_time0bk', 0)),
+            float(features_dict.get('koi_impact', 0)),
+            float(features_dict.get('koi_duration', 0)),
+            float(features_dict.get('koi_depth', 0)),
+            float(features_dict.get('koi_model_snr', 0)),
+            float(features_dict.get('koi_steff', 0)),
+            float(features_dict.get('koi_slogg', 0)),
+            float(features_dict.get('koi_srad', 0)),
+            float(features_dict.get('koi_teq', 0)),
+            float(features_dict.get('koi_insol', 0)) if features_dict.get('koi_insol') else None
+        ))
+
+        # Keep only last 10 records
+        cur.execute("SELECT COUNT(*) FROM predictions")
+        count = cur.fetchone()[0]
+
+        if count > 10:
+            cur.execute("""
+                DELETE FROM predictions 
+                WHERE id IN (
+                    SELECT id FROM predictions 
+                    ORDER BY time ASC 
+                    LIMIT ?
+                )
+            """, (count - 10,))
+
+        conn.commit()
+        conn.close()
+        print(f"✅ Saved to database")
+        return True
+    except Exception as e:
+        print(f"❌ Database save error: {e}")
+        return False
+
+# ================= EARTH RADIUS VISUALIZATION =================
 def earth_radius_visualization(radius_earth_radii):
-    """
-    Create Earth radius visualization HTML/CSS
-    radius_earth_radii: planet radius in Earth radii units
-    """
-    # Earth radius in km (for reference)
+    """Create Earth radius visualization HTML/CSS"""
     earth_radius_km = 6371
-    
-    # Calculate planet radius in km
     planet_radius_km = radius_earth_radii * earth_radius_km
     
     # Determine planet type based on radius
@@ -135,8 +201,9 @@ def earth_radius_visualization(radius_earth_radii):
         }}
     </style>
     """
-    
     return visualization
+
+# ================= ROUTES =================
 
 @app.route('/')
 def home():
@@ -146,123 +213,180 @@ def home():
 def about():
     return render_template('index.html', tab='about')
 
-@app.route('/classification')
-def classification():
-    # Clear session when starting new classification
-    session.clear()
-    return render_template('index.html', tab='classification')
-
-@app.route('/regression')
-def regression():
-    # Check if user has a confirmed planet
-    if 'planet_confirmed' not in session or not session['planet_confirmed']:
-        return redirect(url_for('classification'))
-    return render_template('index.html', tab='regression')
-
 @app.route('/history')
-def history():
+def history_page():
     return render_template('index.html', tab='history')
 
-@app.route('/classify', methods=['POST'])
-def classify():
-    try:
-        # Get form data
-        features = []
-        feature_dict = {}
-        for feature in CLASS_FEATURES:
-            value = request.form.get(feature)
-            if not value:
-                return render_template('index.html', tab='classification', 
-                                      message=f"Missing value for {feature}")
-            features.append(float(value))
-            feature_dict[feature] = float(value)
-        
-        # Convert to numpy array and reshape
-        X = np.array(features).reshape(1, -1)
-        
-        # Make prediction
-        prediction = classification_model.predict(X)[0]
-        prediction = int(prediction)
-        
-        # Get confidence if available
+# ================= CLASSIFICATION ROUTE (GET + POST) =================
+@app.route('/classification', methods=['GET', 'POST'])
+def classification():
+    result = None
+    
+    if request.method == 'POST':
         try:
-            probabilities = classification_model.predict_proba(X)[0]
-            confidence = max(probabilities) * 100
-        except:
-            confidence = 0
-        
-        # Store in session
-        session['classification_features'] = [float(f) for f in features]
-        session['feature_dict'] = feature_dict
-        
-        # 0 = CANDIDATE, 1 = FALSE POSITIVE (based on model classes)
-        is_planet = prediction == 0
-        
-        if is_planet:
-            # Planet detected - store confirmation and redirect to regression
-            session['planet_confirmed'] = True
-            return render_template('index.html', 
-                                 tab='classification',
-                                 classification_result="✅ PLANET CANDIDATE DETECTED",
-                                 confidence=f"{confidence:.1f}%",
-                                 show_regression_button=True)
-        else:
-            # No planet - show message only
-            return render_template('index.html', 
-                                 tab='classification',
-                                 classification_result="❌ FALSE POSITIVE",
-                                 message="No planet detected. This is a false positive. Try different parameters.")
-    
-    except Exception as e:
-        print(f"ERROR in classify: {str(e)}")
-        return render_template('index.html', tab='classification',
-                             message=f"Error: {str(e)}")
+            # Get form values - 9 for classification (NO teq, NO insol)
+            koi_period = float(request.form["koi_period"])
+            koi_time0bk = float(request.form["koi_time0bk"])
+            koi_impact = float(request.form["koi_impact"])
+            koi_duration = float(request.form["koi_duration"])
+            koi_depth = float(request.form["koi_depth"])
+            koi_model_snr = float(request.form["koi_model_snr"])
+            koi_steff = float(request.form["koi_steff"])
+            koi_slogg = float(request.form["koi_slogg"])
+            koi_srad = float(request.form["koi_srad"])
+            
+            # Additional for regression
+            koi_teq = float(request.form["koi_teq"])
+            koi_insol = float(request.form["koi_insol"])
 
-@app.route('/regress', methods=['POST'])
-def regress():
+            print(f"✅ Form data received")
+
+            # Store all features in dictionary
+            features_dict = {
+                'koi_period': koi_period,
+                'koi_time0bk': koi_time0bk,
+                'koi_impact': koi_impact,
+                'koi_duration': koi_duration,
+                'koi_depth': koi_depth,
+                'koi_model_snr': koi_model_snr,
+                'koi_steff': koi_steff,
+                'koi_slogg': koi_slogg,
+                'koi_srad': koi_srad,
+                'koi_teq': koi_teq,
+                'koi_insol': koi_insol
+            }
+
+            # ================= CLASSIFICATION =================
+            # Features: [period, time0bk, impact, duration, depth, snr, teff, logg, srad]
+            cls_features = np.array([
+                koi_period, koi_time0bk, koi_impact, koi_duration, koi_depth,
+                koi_model_snr, koi_steff, koi_slogg, koi_srad
+            ]).reshape(1, -1)
+
+            pred = cls_model.predict(cls_features)[0]
+            print(f"✅ Classification Prediction: {pred}")
+
+            try:
+                probs = cls_model.predict_proba(cls_features)[0]
+                confidence = round(max(probs) * 100, 1)
+                probability = round(probs[1] * 100, 1)
+                print(f"Class 0: {probs[0]*100:.1f}%, Class 1: {probs[1]*100:.1f}%")
+            except:
+                confidence = 50
+                probability = 50
+
+            # ================= REGRESSION =================
+            # Features: [period, impact, duration, depth, snr, teff, logg, srad, teq, insol]
+            reg_features = np.array([
+                koi_period, koi_impact, koi_duration, koi_depth,
+                koi_model_snr, koi_steff, koi_slogg, koi_srad,
+                koi_teq, koi_insol
+            ]).reshape(1, -1)
+
+            reg_scaled = x_scaler.transform(reg_features)
+            pred_scaled = reg_model.predict(reg_scaled)
+            radius = y_scaler.inverse_transform(pred_scaled.reshape(-1, 1))[0][0]
+
+            # Planet type based on radius
+            if radius < 1:
+                planet_type = "Earth-sized"
+            elif radius < 4:
+                planet_type = "Super-Earth"
+            else:
+                planet_type = "Gas Giant"
+
+            # Determine if planet candidate (1 = CANDIDATE, 0 = FALSE POSITIVE)
+            if pred == 1:
+                label = "Confirmed Planet"
+                result = {
+                    "class": label,
+                    "exists": True,
+                    "confidence": confidence,
+                    "probability": probability,
+                    "radius": round(radius, 3),
+                    "planet_type": planet_type
+                }
+                
+                # Save to database
+                save_to_database(
+                    label="CONFIRMED",
+                    confidence=confidence,
+                    radius=round(radius, 3),
+                    planet_type=planet_type,
+                    features_dict=features_dict
+                )
+            else:
+                label = "False Positive"
+                result = {
+                    "class": label,
+                    "exists": False,
+                    "confidence": confidence,
+                    "probability": probability,
+                    "radius": None,
+                    "planet_type": None
+                }
+                
+                # Save to database
+                save_to_database(
+                    label="FALSE POSITIVE",
+                    confidence=confidence,
+                    radius=None,
+                    planet_type=None,
+                    features_dict=features_dict
+                )
+
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template('index.html', tab='classification', error=str(e))
+    
+    return render_template('index.html', tab='classification', result=result)
+
+@app.route('/get_history')
+def get_history():
+    """API endpoint to get history from database"""
     try:
-        # Check if this is a valid planet candidate
-        if 'planet_confirmed' not in session or not session['planet_confirmed']:
-            return render_template('index.html', tab='regression',
-                                 message="No confirmed planet. Please complete classification first.")
-        
-        # Get insol from form
-        koi_insol = float(request.form.get('koi_insol'))
-        
-        # Get classification features from session
-        if 'classification_features' not in session:
-            return render_template('index.html', tab='regression',
-                                 message="Session expired. Please start a new classification.")
-        
-        features = session['classification_features']
-        feature_dict = session.get('feature_dict', {})
-        feature_dict['koi_insol'] = koi_insol
-        
-        # Add insol to features
-        features.append(koi_insol)
-        
-        # Convert to numpy array and scale
-        X = np.array(features).reshape(1, -1)
-        X_scaled = x_scaler.transform(X)
-        
-        # Make prediction
-        y_pred_scaled = regression_model.predict(X_scaled)
-        y_pred = y_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()[0]
-        y_pred = float(y_pred)
-        
-        # Generate visualization
-        visualization = earth_radius_visualization(y_pred)
-        
-        return render_template('index.html', 
-                             tab='regression',
-                             regression_result=f"🌍 {y_pred:.2f} R🜨",
-                             visualization=visualization,
-                             show_visualization=True)
+        conn = sqlite3.connect("cosmos.db")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM predictions ORDER BY time DESC LIMIT 10")
+        rows = cur.fetchall()
+
+        history = []
+        for row in rows:
+            pred = {}
+            for key in row.keys():
+                val = row[key]
+                if val is None:
+                    pred[key] = None
+                elif isinstance(val, (int, float)):
+                    if key in ['confidence', 'radius']:
+                        pred[key] = round(float(val), 2) if val else None
+                    else:
+                        pred[key] = val
+                else:
+                    pred[key] = str(val)
+            history.append(pred)
+
+        conn.close()
+        return jsonify({"success": True, "history": history})
     
     except Exception as e:
-        print(f"ERROR in regress: {str(e)}")
-        return render_template('index.html', tab='regression',
-                             message=f"Error: {str(e)}")
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/clear_history', methods=['POST'])
+def clear_history():
+    try:
+        conn = sqlite3.connect("cosmos.db")
+        cur = conn.cursor()
+        cur.execute("DELETE FROM predictions")
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/reset')
 def reset():
@@ -270,4 +394,4 @@ def reset():
     return redirect(url_for('classification'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='127.0.0.1', port=5000)
